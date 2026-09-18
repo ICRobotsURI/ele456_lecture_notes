@@ -1,0 +1,11 @@
+\begin{tikzpicture}[scale=.9]
+\draw[axis] (0,0)--(5,0) node[right] {$x_W$};
+\draw[axis] (0,0)--(0,3.3) node[above] {$y_W$};
+\node[below left] at (0,0) {$O_W$};
+\draw[axis,sensorframe] (0,0)--(2.6,1.5) node[midway,above left] {$\boldsymbol{t}_R^W$};
+\begin{scope}[shift={(2.6,1.5)}]
+\fill (0,0) circle (2pt) node[below right] {$O_R$};
+\draw[axis,robotframe] (0,0)--(30:2) node[right] {$x_R$};
+\draw[axis,robotframe] (0,0)--(120:1.8) node[above] {$y_R$};
+\end{scope}
+\end{tikzpicture}

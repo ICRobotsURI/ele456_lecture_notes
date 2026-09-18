@@ -1,0 +1,393 @@
+\chapter{Planar rigid transformations and homogeneous coordinates}
+\label{chap:lecture03}
+
+Rotation describes the relative orientation of two frames, but a mobile robot
+also changes position. Its origin generally differs from the origin of the
+world map. A sensor mounted on the robot may have yet another origin and
+orientation. Relating point coordinates between these frames requires both
+rotation and translation.
+
+This chapter extends the rotation model of Chapter~\ref{chap:lecture02} to
+planar rigid transformations. The geometric construction leads first to an
+affine coordinate relationship, then to a homogeneous matrix representation
+that combines rotation and translation in a single multiplication. The same
+representation makes composition and inversion systematic.
+
+\section{Rotation and translation between two frames}
+Let $O_W$ and $O_R$ be the origins of world frame $W$ and robot frame $R$.
+Define
+\[
+ p_R^W=\begin{bmatrix}p_{Rx}^W\\p_{Ry}^W\end{bmatrix}
+\]
+as the position of $O_R$ relative to $O_W$, expressed in world coordinates.
+The rotation matrix $R_R^W$ describes the orientation of $R$ relative to $W$.
+Together, $p_R^W$ and $R_R^W$ specify the robot frame's planar pose.
+
+For a point $B$, the geometric displacement vectors obey
+\begin{equation}
+ \overrightarrow{O_WB}=\overrightarrow{O_WO_R}+\overrightarrow{O_RB}.
+ \label{eq:l03-vector-sum}
+\end{equation}
+This triangle relation is independent of coordinates. To turn it into a
+numerical calculation, however, every vector being added must be expressed
+in the same frame.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture03/geometry}
+\caption{The displacement to $B$ is the sum of the displacement to the robot
+origin and the displacement from that origin to $B$. All three arrow labels
+give components in $W$. The geometry uses $p_R^W=[2\;1]\trans$,
+$\theta=\pi/6$, and $B^R=[1\;1]\trans$.}
+\label{fig:l03-geometry}
+\end{figure}
+
+The column $B^R$ contains the components of $\overrightarrow{O_RB}$ along
+the robot axes. The column $p_R^W$ uses the world axes. Adding these columns
+directly would combine components measured along different directions.
+First rotate $B^R$ into world-aligned components; then add the translation:
+\begin{equation}
+ \boxed{B^W=p_R^W+R_R^W B^R.}
+ \label{eq:l03-affine}
+\end{equation}
+Here $R_R^W B^R$ describes the displacement from $O_R$ to $B$ using world
+directions. It is not, by itself, the position of $B$ relative to $O_W$.
+
+\subsection{An intermediate frame makes the geometry explicit}
+Introduce a frame $A$ with origin $O_A=O_R$ and axes parallel to those of $W$.
+Frames $R$ and $A$ differ only by rotation, so the previous chapter gives
+\[
+ B^A=R_R^A B^R.
+\]
+Since $A$ and $W$ have the same orientation, $R_R^A=R_R^W$. Moreover, the
+components in $A$ use exactly the directions needed for addition to $p_R^W$.
+Thus $B^W=p_R^W+B^A$, recovering Equation~\eqref{eq:l03-affine}.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture03/intermediate}
+\caption{The auxiliary frame $A$ shares the robot origin but is aligned with
+the world. Rotating from $R$ to $A$ resolves the displacement into components
+that can be added to the world position of $O_R$.}
+\label{fig:l03-intermediate}
+\end{figure}
+
+\subsection{Why the relationship is affine}
+A map $f(b)=Rb+p$ is called affine: it consists of a linear map followed by
+an offset. With a nonzero translation, it is not a linear map of the original
+two coordinates, since $f(0)=p\ne0$. In the present setting $R$ is a rotation,
+so the transformation is rigid: it preserves distances between points.
+Distances to the coordinate origin need not be preserved when the origin changes.
+
+\subsection{Worked example}
+Suppose the given quantities are
+\[
+ B^R=\begin{bmatrix}1\\1\end{bmatrix}\,\mathrm{m},\qquad
+ p_R^W=\begin{bmatrix}2\\1\end{bmatrix}\,\mathrm{m},\qquad
+ \theta_R^W=\frac{\pi}{6}.
+\]
+The rotation matrix is dimensionless. Applying the affine relationship gives
+\begin{align}
+ B^W
+ &=\begin{bmatrix}2\\1\end{bmatrix}
+ +\begin{bmatrix}\sqrt3/2&-1/2\\1/2&\sqrt3/2\end{bmatrix}
+ \begin{bmatrix}1\\1\end{bmatrix}\\
+ &=\begin{bmatrix}(3+\sqrt3)/2\\(3+\sqrt3)/2\end{bmatrix}
+ \approx\begin{bmatrix}2.3660\\2.3660\end{bmatrix}\,\mathrm{m}.
+ \label{eq:l03-example}
+\end{align}
+The coordinate arithmetic uses metres throughout. The result agrees with
+Figure~\ref{fig:l03-geometry}: the point lies above and slightly to the right
+of the robot origin. Keeping the exact expressions until the final step avoids
+rounding errors when reversing the calculation.
+
+\section{Reversing the affine relationship}
+Suppose $B^W$ is known and $B^R$ is required. Subtract the world-coordinate
+translation before applying the inverse rotation:
+\begin{align}
+ B^W-p_R^W&=R_R^W B^R,\\
+ \boxed{B^R=(R_R^W)\trans\bigl(B^W-p_R^W\bigr).}
+ \label{eq:l03-affine-inverse}
+\end{align}
+The difference in parentheses is expressed in $W$; the transpose maps it to
+$R$. The parentheses matter: the rotation acts on both terms, not just on $B^W$.
+Equivalently,
+\begin{equation}
+ B^R=-(R_R^W)\trans p_R^W+(R_R^W)\trans B^W.
+ \label{eq:l03-inverse-expanded}
+\end{equation}
+This has the same affine structure as the forward relationship, with
+\begin{equation}
+ R_W^R=(R_R^W)\trans,\qquad p_W^R=-(R_R^W)\trans p_R^W.
+ \label{eq:l03-reverse-pose}
+\end{equation}
+The reversed translation is not generally just $-p_R^W$: it must also be
+expressed along the axes of the reverse transformation's output frame.
+
+For the exact coordinates in Equation~\eqref{eq:l03-example},
+\[
+ B^W-p_R^W=\begin{bmatrix}(\sqrt3-1)/2\\(1+\sqrt3)/2\end{bmatrix}\,\mathrm{m}.
+\]
+Multiplying by
+$\begin{bmatrix}\sqrt3/2&1/2\\-1/2&\sqrt3/2\end{bmatrix}$
+recovers $B^R=[1\;1]\trans\,\mathrm{m}$. If the rounded value
+$[2.37\;2.37]\trans$ is used instead, the recovered result is approximately
+$[1.0054\;1.0015]\trans\,\mathrm{m}$, rather than exactly $[1\;1]\trans$.
+
+\section{Composing transformations through a sensor frame}
+A sensor frame $S$ may be displaced and rotated relative to the robot frame.
+Given the sensor's pose in $R$ and the robot's pose in $W$, the two coordinate
+relationships are
+\[
+ B^R=p_S^R+R_S^R B^S,\qquad B^W=p_R^W+R_R^W B^R.
+\]
+Substitution yields
+\begin{align}
+ B^W&=p_R^W+R_R^W\bigl(p_S^R+R_S^R B^S\bigr)\\
+ &=\underbrace{p_R^W+R_R^W p_S^R}_{p_S^W}
+ +\underbrace{R_R^W R_S^R}_{R_S^W}B^S.
+ \label{eq:l03-composition-expanded}
+\end{align}
+The overall rotation and translation are therefore
+\begin{equation}
+ \boxed{R_S^W=R_R^W R_S^R,\qquad
+ p_S^W=p_R^W+R_R^W p_S^R.}
+\end{equation}
+The sensor translation must be rotated into $W$ before it can be added to
+the robot translation. Frame labels explain why the expression is valid and
+why simply adding $p_R^W+p_S^R$ would be incorrect in general.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture03/composition}
+\caption{A world--robot--sensor chain with distinct origins. Each displacement
+along the path to $B$ is labeled in world components so that the arrows can be
+added numerically. The dashed line is the direct displacement to $B$.}
+\label{fig:l03-composition}
+\end{figure}
+
+Repeated substitution works for any number of frames, but each additional
+frame introduces another translation term. A representation that absorbs
+these additions into matrix multiplication makes longer chains easier to manage.
+
+\section{Homogeneous coordinates and transformation matrices}
+\subsection{Adding one coordinate}
+For a point with coordinates $B^R$, define its homogeneous representation by
+appending a dimensionless one:
+\begin{equation}
+ \widetilde B^R=\begin{bmatrix}B^R\\1\end{bmatrix}
+ =\begin{bmatrix}x_B^R\\y_B^R\\1\end{bmatrix}.
+\end{equation}
+The additional coordinate is bookkeeping for translation, not a third spatial
+coordinate. Define the planar homogeneous transformation matrix as
+\begin{equation}
+ \boxed{H_R^W=\begin{bmatrix}R_R^W&p_R^W\\0_{1\times2}&1\end{bmatrix}.}
+ \label{eq:l03-H}
+\end{equation}
+Its blocks have dimensions $2\times2$, $2\times1$, $1\times2$, and $1\times1$,
+respectively. Written entry by entry, it is
+\[
+ H_R^W=\begin{bmatrix}
+ \cos\theta&-\sin\theta&p_{Rx}^W\\
+ \sin\theta&\cos\theta&p_{Ry}^W\\
+ 0&0&1
+ \end{bmatrix}.
+\]
+The upper-left block contains dimensionless rotation coefficients; the first
+two entries of the last column carry the chosen length unit. Block divisions
+are visual aids, not extra mathematical operations.
+
+\subsection{One product performs the full transformation}
+Block multiplication gives
+\begin{equation}
+ H_R^W\widetilde B^R
+ =\begin{bmatrix}R_R^W&p_R^W\\0_{1\times2}&1\end{bmatrix}
+ \begin{bmatrix}B^R\\1\end{bmatrix}
+ =\begin{bmatrix}R_R^W B^R+p_R^W\\1\end{bmatrix}
+ =\widetilde B^W.
+\end{equation}
+Thus the affine transformation becomes a single matrix multiplication:
+\begin{equation}
+ \boxed{\widetilde B^W=H_R^W\widetilde B^R.}
+ \label{eq:l03-homogeneous-map}
+\end{equation}
+The first two output entries are the desired point coordinates. For the
+normalized point representation used here, the last entry remains one.
+The fixed bottom row $[0\;0\;1]$ is what preserves this property.
+
+For the running example, using metres for the position entries,
+\[
+ \begin{bmatrix}\sqrt3/2&-1/2&2\\1/2&\sqrt3/2&1\\0&0&1\end{bmatrix}
+ \begin{bmatrix}1\\1\\1\end{bmatrix}
+ =\begin{bmatrix}(3+\sqrt3)/2\\(3+\sqrt3)/2\\1\end{bmatrix}
+ \approx\begin{bmatrix}2.3660\\2.3660\\1\end{bmatrix}.
+\]
+The physical point coordinates are the first two entries in metres; the final
+one has no length unit.
+
+\section{Composition by matrix multiplication}
+Using homogeneous coordinates for the sensor chain,
+\[
+ \widetilde B^R=H_S^R\widetilde B^S,\qquad
+ \widetilde B^W=H_R^W\widetilde B^R.
+\]
+Combining the two maps gives
+\begin{equation}
+ \boxed{H_S^W=H_R^W H_S^R,\qquad
+ \widetilde B^W=H_R^W H_S^R\widetilde B^S.}
+\end{equation}
+Multiplying the blocks verifies that this contains both composition rules:
+\begin{align}
+ H_R^W H_S^R
+ &=\begin{bmatrix}R_R^W&p_R^W\\0&1\end{bmatrix}
+   \begin{bmatrix}R_S^R&p_S^R\\0&1\end{bmatrix}\\
+ &=\begin{bmatrix}
+ R_R^W R_S^R&p_R^W+R_R^W p_S^R\\0&1
+ \end{bmatrix}=H_S^W.
+\end{align}
+Here each $0$ in the bottom-left block denotes a $1\times2$ zero row.
+The product is another homogeneous rigid transformation with bottom row
+$[0\;0\;1]$. As before, the rightmost map acts first and adjacent frame
+indices must match. For example,
+\[
+ H_1^2 H_3^1 H_4^3 H_5^4=H_5^2
+\]
+maps coordinates through $5\to4\to3\to1\to2$.
+
+Unlike pure planar rotations, planar transformations with translation do not
+generally commute. The term $R_R^W p_S^R$ shows why: a preceding rotation
+changes the direction in which a subsequent local translation acts.
+
+\section{Inverting a homogeneous transformation}
+\subsection{Why the transpose is insufficient}
+Expanding the determinant along the bottom row gives
+\[
+ \det(H_R^W)=\det(R_R^W)=1.
+\]
+Every matrix of this rigid-transformation form is therefore invertible.
+However, it is generally not orthogonal. If its translation is nonzero, its
+transpose has bottom row $[(p_R^W)\trans\;1]$ rather than $[0\;0\;1]$.
+Consequently, transposing the full matrix does not produce its inverse.
+When the translation is zero, the full matrix is orthogonal and the transpose
+does coincide with the inverse.
+
+\subsection{Deriving the inverse from the affine relationship}
+Equation~\eqref{eq:l03-inverse-expanded} already identifies the reverse
+rotation and translation. Place these in their corresponding blocks:
+\begin{equation}
+ \boxed{H_W^R=(H_R^W)^{-1}
+ =\begin{bmatrix}
+ (R_R^W)\trans&-(R_R^W)\trans p_R^W\\0_{1\times2}&1
+ \end{bmatrix}.}
+ \label{eq:l03-H-inverse}
+\end{equation}
+This gives $\widetilde B^R=H_W^R\widetilde B^W$ without a general-purpose
+$3\times3$ inversion. Transpose the rotation block, compute the rotated
+negative translation, and retain the bottom row.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture03/blocks}
+\caption{Block structure of a transform and its inverse. Red blocks contain
+rotation; blue blocks contain translation. The inverse translation must be
+rotated as well as negated. Block widths are schematic.}
+\label{fig:l03-blocks}
+\end{figure}
+
+For a compact verification, write $R=R_R^W$ and $p=p_R^W$. Then
+\[
+ \begin{bmatrix}R&p\\0&1\end{bmatrix}
+ \begin{bmatrix}R\trans&-R\trans p\\0&1\end{bmatrix}
+ =\begin{bmatrix}RR\trans&-RR\trans p+p\\0&1\end{bmatrix}=I_3.
+\]
+The reverse product also equals $I_3$, since its translation block is
+$R\trans p-R\trans p=0$.
+
+\subsection{Worked inverse}
+For $p_R^W=[2\;1]\trans\,\mathrm{m}$ and $\theta_R^W=\pi/6$,
+\begin{align*}
+ -(R_R^W)\trans p_R^W
+ &=-\begin{bmatrix}\sqrt3/2&1/2\\-1/2&\sqrt3/2\end{bmatrix}
+ \begin{bmatrix}2\\1\end{bmatrix}\\
+ &=\begin{bmatrix}-\sqrt3-1/2\\1-\sqrt3/2\end{bmatrix}
+ \approx\begin{bmatrix}-2.2321\\0.1340\end{bmatrix}\,\mathrm{m}.
+\end{align*}
+Hence, with translation entries in metres,
+\begin{equation}
+ H_W^R=\begin{bmatrix}
+ \sqrt3/2&1/2&-\sqrt3-1/2\\
+ -1/2&\sqrt3/2&1-\sqrt3/2\\
+ 0&0&1
+ \end{bmatrix}.
+\end{equation}
+Its last column locates the world origin in robot coordinates. Its upper-left
+block describes the world axes in the robot frame. These meanings provide
+geometric checks on the inverse, in addition to verifying the matrix product.
+
+\section{Key identities}
+\begin{center}
+\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{ll}
+\toprule
+Operation & Identity \\
+\midrule
+Forward point transformation & $B^W=p_R^W+R_R^W B^R$ \\
+Reverse point transformation & $B^R=(R_R^W)\trans(B^W-p_R^W)$ \\
+Homogeneous point transformation & $\widetilde B^W=H_R^W\widetilde B^R$ \\
+Composition & $H_S^W=H_R^W H_S^R$ \\
+Reverse rotation & $R_W^R=(R_R^W)\trans$ \\
+Reverse translation & $p_W^R=-(R_R^W)\trans p_R^W$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+Always specify the frame of a translation, express displacements in a common
+frame before adding them, and distinguish the inverse of a rotation matrix
+from the inverse of a full homogeneous transformation.
+
+\clearpage
+\section{Additional exercises}
+Use metres for all position coordinates and counterclockwise-positive angles.
+Show your calculations and keep exact values until the final numerical step.
+\begin{enumerate}
+\item \textbf{A translated and rotated robot.}
+Let $p_R^W=[3\;1]\trans$, $\theta_R^W=\pi/2$, and
+$B^R=[2\;-1]\trans$. Sketch the two frames and the point. Compute $B^W$
+using the affine relationship and explain why $p_R^W+B^R$ gives a different result.
+
+\item \textbf{Recovering robot coordinates.}
+Suppose $p_R^W=[1\;-2]\trans$, $\theta_R^W=-\pi/2$, and
+$B^W=[4\;-3]\trans$. Find $B^R$. Substitute it into the forward
+relationship to verify your answer. State the frame of every vector being added.
+
+\item \textbf{Building a homogeneous matrix.}
+Construct $H_R^W$ for $p_R^W=[2\;0]\trans$ and $\theta_R^W=\pi/4$.
+Use it to transform $B^R=[\sqrt2\;0]\trans$. Identify the physical
+coordinates in the output and explain the role of its last entry.
+
+\item \textbf{World--robot--sensor composition.}
+Let $p_R^W=[2\;1]\trans$, $\theta_R^W=\pi/2$,
+$p_S^R=[1\;0]\trans$, and $\theta_S^R=-\pi/2$.
+Find $H_S^W=H_R^W H_S^R$ and use it to transform $B^S=[1\;2]\trans$.
+Check your result by applying the two affine transformations separately.
+
+\item \textbf{Inversion without a general matrix inverse.}
+For
+\[
+ H_R^W=\begin{bmatrix}0&-1&2\\1&0&3\\0&0&1\end{bmatrix},
+\]
+compute $H_W^R$ using its rotation and translation blocks. Verify
+$H_W^R H_R^W=I_3$. Compare your result with $(H_R^W)\trans$ and identify
+why the transpose fails.
+
+\item \textbf{Order of operations.}
+Consider the two maps, expressed using a fixed coordinate system,
+\[
+ T=\begin{bmatrix}1&0&1\\0&1&0\\0&0&1\end{bmatrix},\qquad
+ Q=\begin{bmatrix}0&-1&0\\1&0&0\\0&0&1\end{bmatrix}.
+\]
+Compute $QT$ and $TQ$ and apply each to $[0\;0\;1]\trans$.
+Explain geometrically why rotating after translating differs from translating
+after rotating.
+
+\item \textbf{Distances between points.}
+Two points obey $B^W=p+RB^R$ and $C^W=p+RC^R$, with $R$ orthogonal.
+Show that $B^W-C^W=R(B^R-C^R)$ and use this to prove that their distance
+is preserved. Why need the distance of a single point from its coordinate
+origin not be preserved?
+\end{enumerate}

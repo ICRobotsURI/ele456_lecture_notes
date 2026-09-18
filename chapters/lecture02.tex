@@ -1,0 +1,365 @@
+\chapter{Reference frames and planar rotations}
+\label{chap:lecture02}
+
+A robot must relate what its sensors observe to a description of the surrounding
+world. An obstacle may be directly ahead of the robot, yet lie in a different
+direction when described on a map. Neither description is ambiguous once the
+reference frame is specified. The task is to express the same geometric point
+in different coordinate systems.
+
+This chapter develops that change of coordinates for planar frames with a
+common origin. Their relative orientation is described by one angle, or
+equivalently by a rotation matrix. The matrix formulation makes it possible to
+transform coordinates, reverse a transformation, and compose transformations
+through several frames using the linear algebra of Chapter~\ref{chap:lecture01}.
+
+\section{Coordinates depend on a reference frame}
+A planar Cartesian reference frame consists of an origin and two perpendicular
+unit directions, denoted $\boldsymbol{x}$ and $\boldsymbol{y}$. A world frame
+$W$ provides a fixed reference for a map, while a robot frame $R$ is attached
+to the robot. A sensor can have its own frame $S$.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture02/world-robot}
+\caption{A map and a robot use different reference frames. In a general setting
+their origins and orientations both differ.}
+\label{fig:l02-map}
+\end{figure}
+
+If the robot's $x_R$ axis points forward and $y_R$ points left, an obstacle one
+unit ahead has robot coordinates $[1\;0]\trans$. An obstacle one unit to the
+left has coordinates $[0\;1]\trans$. These descriptions alone do not specify
+where the obstacles belong on the world map; the relation between the frames
+is also needed.
+
+\subsection{Notation and the common-origin assumption}
+Let $B$ denote a geometric point. Its coordinates are column vectors,
+\begin{equation}
+ B^W=\begin{bmatrix}x_B^W\\y_B^W\end{bmatrix},\qquad
+ B^R=\begin{bmatrix}x_B^R\\y_B^R\end{bmatrix}.
+\end{equation}
+The superscript states the frame in which the coordinates are expressed.
+The point $B$ does not change when its coordinate description changes.
+
+For now, assume that $W$ and $R$ share an origin $O$ and have the same
+orientation convention for their axes. Let $\theta=\theta_R^W$ be the signed
+angle from $x_W$ to $x_R$, positive counterclockwise. Only a rotation separates
+the two frames. Figure~\ref{fig:l02-coordinates} shows how projections onto
+their axes produce different coordinates for the same point.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture02/coordinates}
+\caption{A point expressed in two frames with a common origin. Black axes
+belong to $W$ and red axes to $R$; dashed lines give the coordinate projections.}
+\label{fig:l02-coordinates}
+\end{figure}
+
+\section{Constructing the rotation matrix}
+\subsection{The columns are the rotated basis vectors}
+The direction $\boldsymbol{x}_R$ makes angle $\theta$ with $x_W$. Because it
+is a unit vector, its components in the world frame are
+\begin{equation}
+ [\boldsymbol{x}_R]^W=\begin{bmatrix}\cos\theta\\\sin\theta\end{bmatrix}.
+\end{equation}
+The direction $\boldsymbol{y}_R$ is a further $\pi/2$ counterclockwise, so
+\begin{equation}
+ [\boldsymbol{y}_R]^W
+ =\begin{bmatrix}\cos(\theta+\pi/2)\\\sin(\theta+\pi/2)\end{bmatrix}
+ =\begin{bmatrix}-\sin\theta\\\cos\theta\end{bmatrix}.
+\end{equation}
+Here brackets with a superscript mean the components of a geometric vector
+in the indicated frame. The negative sign in the first component of
+$[\boldsymbol{y}_R]^W$ is essential: for a small positive angle, $y_R$
+points to the left of $y_W$.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture02/basis}
+\caption{Components of the robot's unit basis vectors in the world frame.
+The right triangle explains the sine and cosine components of $\boldsymbol{x}_R$.}
+\label{fig:l02-basis}
+\end{figure}
+
+Putting these two column vectors side by side defines the rotation matrix:
+\begin{equation}
+ \boxed{R_R^W
+ =\begin{bmatrix}[\boldsymbol{x}_R]^W &[\boldsymbol{y}_R]^W\end{bmatrix}
+ =\begin{bmatrix}\cos\theta&-\sin\theta\\\sin\theta&\cos\theta\end{bmatrix}.}
+ \label{eq:l02-rotation}
+\end{equation}
+The subscript identifies the frame whose orientation is being described, and
+the superscript identifies the reference frame. As a coordinate map, $R_R^W$
+takes components expressed in $R$ and returns components expressed in $W$.
+An angle is a compact description of orientation; the matrix provides a linear
+map on coordinate vectors once that angle is fixed.
+
+\subsection{Orthogonality}
+Write $c=\cos\theta$ and $s=\sin\theta$. Direct multiplication gives
+\[
+ (R_R^W)\trans R_R^W
+ =\begin{bmatrix}c&s\\-s&c\end{bmatrix}
+  \begin{bmatrix}c&-s\\s&c\end{bmatrix}
+ =\begin{bmatrix}c^2+s^2&0\\0&c^2+s^2\end{bmatrix}=I_2.
+\]
+Thus $R_R^W$ is orthogonal and
+\begin{equation}
+ (R_R^W)^{-1}=(R_R^W)\trans
+ =\begin{bmatrix}\cos\theta&\sin\theta\\-\sin\theta&\cos\theta\end{bmatrix}.
+ \label{eq:l02-inverse}
+\end{equation}
+Its determinant is $c^2+s^2=1$. This last property distinguishes a rotation
+from an orthogonal reflection, whose determinant is $-1$.
+
+\section{Transforming the coordinates of a point}
+The vector from the common origin to $B$ can be decomposed along the robot axes:
+\[
+ \overrightarrow{OB}=x_B^R\boldsymbol{x}_R+y_B^R\boldsymbol{y}_R.
+\]
+Expressing both basis vectors in $W$ gives
+\begin{equation}
+ \boxed{B^W=R_R^W B^R.}
+ \label{eq:l02-coordinate-map}
+\end{equation}
+In scalar form, this is
+\begin{align}
+ x_B^W&=\cos\theta\,x_B^R-\sin\theta\,y_B^R,\\
+ y_B^W&=\sin\theta\,x_B^R+\cos\theta\,y_B^R.
+\end{align}
+The dimensions are $(2\times2)(2\times1)=(2\times1)$, and the input frame
+$R$ agrees with the matrix subscript. Both checks are useful: correct matrix
+dimensions alone do not establish that the intended frames match.
+
+\subsection{A geometric derivation}
+For $B\ne O$, let $d$ be the distance from $O$ to $B$, let $\alpha$ be the
+angle from $x_R$ to $\overrightarrow{OB}$, and let $\beta$ be the angle from
+$x_W$ to that vector. The angles satisfy $\beta=\alpha+\theta$ (modulo $2\pi$).
+Consequently,
+\[
+ x_B^R=d\cos\alpha,\quad y_B^R=d\sin\alpha,\qquad
+ x_B^W=d\cos\beta,\quad y_B^W=d\sin\beta.
+\]
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture02/angles}
+\caption{The same position vector has angle $\alpha$ in $R$ and angle
+$\beta=\alpha+\theta$ in $W$. Its length $d$ is independent of the frame.}
+\label{fig:l02-angles}
+\end{figure}
+
+Expanding the angle sums gives
+\begin{align*}
+ x_B^W&=d\cos(\alpha+\theta)
+ =d\cos\alpha\cos\theta-d\sin\alpha\sin\theta\\
+ &=\cos\theta\,x_B^R-\sin\theta\,y_B^R,\\
+ y_B^W&=d\sin(\alpha+\theta)
+ =d\cos\alpha\sin\theta+d\sin\alpha\cos\theta\\
+ &=\sin\theta\,x_B^R+\cos\theta\,y_B^R.
+\end{align*}
+These are precisely the entries of~\eqref{eq:l02-coordinate-map}. The matrix
+formula also applies at $B=O$, where both coordinate vectors are zero and a
+direction angle is unnecessary.
+
+\subsection{Worked example: a thirty-degree orientation}
+Suppose
+\[
+ B^R=\begin{bmatrix}0.8\\0.5\end{bmatrix},\qquad \theta=\frac{\pi}{6}.
+\]
+Then
+\begin{align}
+ B^W
+ &=\begin{bmatrix}\sqrt3/2&-1/2\\1/2&\sqrt3/2\end{bmatrix}
+   \begin{bmatrix}0.8\\0.5\end{bmatrix}\\
+ &=\begin{bmatrix}0.4\sqrt3-0.25\\0.4+0.25\sqrt3\end{bmatrix}
+ \approx\begin{bmatrix}0.4428\\0.8330\end{bmatrix}.
+ \label{eq:l02-example}
+\end{align}
+The coordinates change, but the point's distance from the common origin does
+not. Indeed, orthogonality implies
+\[
+ (B^W)\trans B^W=(B^R)\trans(R_R^W)\trans R_R^W B^R
+ =(B^R)\trans B^R=0.8^2+0.5^2=0.89.
+\]
+This is a change of coordinate description of a fixed point, rather than a
+physical motion of that point.
+
+\section{Reversing a coordinate transformation}
+To recover robot coordinates from world coordinates, multiply
+Equation~\eqref{eq:l02-coordinate-map} on the left by the inverse:
+\[
+ (R_R^W)^{-1}B^W=(R_R^W)^{-1}R_R^W B^R=B^R.
+\]
+Using orthogonality,
+\begin{equation}
+ \boxed{B^R=(R_R^W)\trans B^W=R_W^R B^W,\qquad
+ R_W^R=(R_R^W)\trans.}
+\end{equation}
+Reversing the frame relation exchanges the frame indices and negates the
+relative angle. If $R(\theta)$ denotes the matrix in
+Equation~\eqref{eq:l02-rotation}, then $R(\theta)\trans=R(-\theta)$.
+For arbitrary frames $A$ and $F$, the same rule reads
+\begin{equation}
+ R_F^A=(R_A^F)\trans.
+ \label{eq:l02-swap}
+\end{equation}
+For example, applying the transpose to the exact vector in
+Equation~\eqref{eq:l02-example} recovers $[0.8\;0.5]\trans$.
+
+\section{Composing rotations through several frames}
+A measurement may begin in a sensor frame $S$, pass through a robot frame $R$,
+and finally be expressed in $W$. Assume again that all origins coincide.
+Let the orientation of $R$ relative to $W$ be $\theta$, and the orientation
+of $S$ relative to $R$ be $\varphi$.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture02/composition}
+\caption{Three frames with a common origin. The sensor frame (blue) is rotated
+by $\varphi$ relative to the robot frame (red), which is rotated by $\theta$
+relative to the world frame (black).}
+\label{fig:l02-composition}
+\end{figure}
+
+The two successive coordinate transformations are
+\[
+ B^R=R_S^R B^S,\qquad B^W=R_R^W B^R.
+\]
+Substitution gives
+\begin{equation}
+ B^W=R_R^W R_S^R B^S,\qquad
+ \boxed{R_S^W=R_R^W R_S^R.}
+ \label{eq:l02-chain}
+\end{equation}
+The rightmost matrix acts first. Its output is expressed in $R$, precisely the
+frame expected by the matrix to its left. In two dimensions,
+\[
+ R_R^W=R(\theta),\qquad R_S^R=R(\varphi),\qquad
+ R_S^W=R(\theta+\varphi),
+\]
+as can be verified with the sine and cosine addition identities.
+
+\subsection{Reading the frame indices}
+The general composition rule is
+\begin{equation}
+ R_C^A=R_B^A R_C^B.
+\end{equation}
+The subscript of the left factor matches the superscript of the next factor.
+The remaining indices identify the overall output and input frames. This is
+a rule about the meanings of the maps, not ordinary cancellation of numbers.
+
+For example,
+\begin{equation}
+ R_2^3 R_4^2 R_5^4 R_1^5=R_1^3.
+ \label{eq:l02-long-chain}
+\end{equation}
+Reading from right to left, the coordinates pass through frames
+$1\to5\to4\to2\to3$. By contrast, in the written product $R_2^3 R_3^4$,
+the inner frame labels $2$ and $4$ do not match. Its factors cannot be composed
+as that sequence of coordinate maps merely by cancelling the repeated $3$.
+
+Planar rotation matrices happen to commute numerically:
+$R(\theta)R(\varphi)=R(\varphi)R(\theta)$. This special property does not
+change the input and output frame labels of an individual map. Keeping the
+frame chain explicit also prepares the notation for three-dimensional
+rotations, where commutativity does not hold in general.
+
+\subsection{Simplifying chains containing transposes}
+First apply the transpose rules, then inspect the frame chain. Consider
+\[
+ R_2^3 (R_2^4)\trans (R_5^1 R_4^5)\trans.
+\]
+Transposing the last product reverses its factor order, so
+\begin{align*}
+ R_2^3 (R_2^4)\trans (R_5^1 R_4^5)\trans
+ &=R_2^3 R_4^2 (R_4^5)\trans (R_5^1)\trans\\
+ &=R_2^3 R_4^2 R_5^4 R_1^5\\
+ &=R_1^3.
+\end{align*}
+Two different operations are involved: a transpose exchanges the frame indices
+of one rotation matrix, and transposing a product reverses the order of its
+factors. Both are necessary to obtain a consistent chain.
+
+\section{The limit of a rotation-only model}
+The formula $B^W=R_R^W B^R$ describes point coordinates when the origins
+coincide. In a general robot configuration, the origin $O_R$ is displaced from
+$O_W$, as in Figure~\ref{fig:l02-translation}. A rotation matrix describes the
+relative orientation, but contains no information about this displacement.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture02/translation}
+\caption{Different origins introduce a translation $\boldsymbol{t}_R^W$.
+Orientation alone cannot determine the world coordinates of a point measured
+relative to $O_R$.}
+\label{fig:l02-translation}
+\end{figure}
+
+To see the limitation, take the point $B=O_R$. Its robot coordinates are zero,
+so $R_R^W B^R=0$ for every rotation matrix. Its world coordinates, however,
+are the nonzero displacement of $O_R$ from $O_W$. A complete point-coordinate
+transformation must therefore include translation as well as rotation.
+The rotation rules remain applicable to direction vectors, which do not depend
+on the choice of origin. Distinguishing point positions from directions is
+essential when extending the model.
+
+\section{Key identities}
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Operation & Identity \\
+\midrule
+Planar rotation & $R(\theta)=\begin{bmatrix}\cos\theta&-\sin\theta\\\sin\theta&\cos\theta\end{bmatrix}$ \\[12pt]
+Point coordinates, common origin & $B^W=R_R^W B^R$ \\
+Reverse transformation & $R_W^R=(R_R^W)\trans=R(-\theta)$ \\
+Composition & $R_S^W=R_R^W R_S^R$ \\
+Planar angle composition & $R(\theta)R(\varphi)=R(\theta+\varphi)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\clearpage
+\section{Additional exercises}
+Use column vectors, show your calculations, and label the input and output
+frames. Unless stated otherwise, all frames share an origin.
+\begin{enumerate}
+\item \textbf{Sketching frames and coordinates.}
+Draw world axes $x_W,y_W$ and robot axes rotated counterclockwise by $\pi/2$.
+A point has $B^R=[2\;1]\trans$. Locate it on your sketch, compute $B^W$,
+and check that your answer agrees with its position relative to the world axes.
+
+\item \textbf{Constructing a rotation matrix.}
+The robot frame is rotated by $-\pi/4$ relative to the world frame. Write
+$[\boldsymbol{x}_R]^W$ and $[\boldsymbol{y}_R]^W$, and use them to construct
+$R_R^W$. Verify $(R_R^W)\trans R_R^W=I_2$ and $\det(R_R^W)=1$.
+
+\item \textbf{Forward and reverse transformations.}
+Let $\theta_R^W=\pi/6$ and $B^R=[1\;2]\trans$. Find $B^W$ in exact form.
+Construct $R_W^R$ and use it to recover $B^R$. Verify that the squared distance
+from the common origin is the same in both coordinate descriptions.
+
+\item \textbf{From a sensor to the world.}
+Suppose $\theta_R^W=\pi/6$, $\theta_S^R=\pi/3$, and
+$B^S=[2\;-1]\trans$. Compute $R_S^W$ and $B^W$. Check your result by first
+finding $B^R$ and then transforming it to $W$. What is the orientation of $S$
+relative to $W$?
+
+\item \textbf{Frame chains and transposes.}
+Simplify the first two expressions to a single rotation matrix. For the third,
+explain why the written frame chain is inconsistent, even though the numerical
+matrix dimensions permit multiplication:
+\[
+ R_B^A R_C^B R_D^C,\qquad
+ (R_A^B)\trans (R_C^D R_B^C)\trans,\qquad
+ R_B^A R_D^C.
+\]
+Assume distinct letters denote distinct frames. State the input and output
+frames of each valid chain.
+
+\item \textbf{Why an origin matters.}
+The robot axes are parallel to the world axes, but the robot origin has world
+coordinates $[3\;1]\trans$. A point has robot coordinates $[2\;0]\trans$.
+Use a sketch to find its world coordinates. What would the rotation-only
+formula predict, and what information would it omit?
+
+\item \textbf{Length preservation.}
+Let $v^W=R_R^W v^R$ be two coordinate descriptions of a direction vector.
+Using orthogonality, show that $(v^W)\trans v^W=(v^R)\trans v^R$.
+Explain geometrically why a change of reference frame cannot change the
+length of the vector.
+\end{enumerate}

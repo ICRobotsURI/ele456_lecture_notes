@@ -1,0 +1,16 @@
+\begin{tikzpicture}[scale=1.4]
+\coordinate (B) at (.366,1.366);
+\draw[axis,sensorframe] (0,0)--(2,0) node[right] {$x_A\parallel x_W$};
+\draw[axis,sensorframe] (0,0)--(0,2) node[above] {$y_A\parallel y_W$};
+\draw[axis,robotframe] (0,0)--(30:2) node[right] {$x_R$};
+\draw[axis,robotframe] (0,0)--(120:1.7) node[above] {$y_R$};
+\draw[axis] (0,0)--(B);
+\fill (B) circle (1.5pt) node[above right] {$B$};
+\draw[projection,sensorframe] (B)--(.366,0) node[below] {$x_B^A$};
+\draw[projection,sensorframe] (B)--(0,1.366) node[left] {$y_B^A$};
+\draw[projection,robotframe] (B)--(30:1);
+\draw[projection,robotframe] (B)--(120:1);
+\draw[-{Stealth}] (.7,0) arc (0:30:.7);
+\node at (15:.94) {$\theta$};
+\node[below left] at (0,0) {$O_A=O_R$};
+\end{tikzpicture}

@@ -1,0 +1,336 @@
+﻿\chapter{Introduction and linear algebra}
+\label{chap:lecture01}
+
+Robotics brings together mathematical models of motion, measurements from
+sensors, and algorithms that determine how a robot should act. Describing a
+robot's position, relating measurements to its surroundings, and planning its
+motion all require a precise mathematical language. Linear algebra provides
+many of the tools used to express these relationships.
+
+This chapter introduces matrices and the operations needed to work with them:
+addition, multiplication, transposition, and inversion. It then examines
+orthogonal matrices, whose inverses can be obtained simply by transposing.
+The examples develop two habits that will remain essential throughout the
+study of robotics: checking dimensions before performing an operation and
+preserving the order of factors in a matrix product.
+\section{Matrices and dimensions}
+
+A \emph{matrix} is an array of numbers arranged in rows and columns. Its
+dimensions are written as
+\[
+  \text{number of rows}\times\text{number of columns}.
+\]
+Consider the matrix
+\begin{equation}
+ A=\begin{bmatrix}1&2\\3&1\\0&1\end{bmatrix}\in\R^{3\times2}.
+ \label{eq:l01-A}
+\end{equation}
+It has three rows and two columns. In general, $a_{ij}$ denotes the entry in
+row $i$, column $j$; for example, $a_{21}=3$ and $a_{32}=1$.
+
+\section{Matrix addition}
+
+Two matrices can be added only if they have the same dimensions. Their entries
+are then added in corresponding positions:
+\[
+ (A+C)_{ij}=a_{ij}+c_{ij}.
+\]
+Consider two additional matrices,
+\[
+ B=\begin{bmatrix}1&2\\1&1\end{bmatrix}\in\R^{2\times2},
+ \qquad
+ C=\begin{bmatrix}0&1\\0&0\\1&0\end{bmatrix}\in\R^{3\times2}.
+\]
+The sum $A+B$ is undefined because the dimensions differ. The sum $A+C$ is
+defined, and its calculation is
+\begin{equation}
+ A+C
+ =\begin{bmatrix}1+0&2+1\\3+0&1+0\\0+1&1+0\end{bmatrix}
+ =\begin{bmatrix}1&3\\3&1\\1&1\end{bmatrix}.
+\end{equation}
+Addition is commutative when defined: $A+C=C+A$.
+
+\section{Matrix multiplication}
+
+\subsection{Dimension rule and row-by-column calculation}
+For matrices $M\in\R^{m\times n}$ and $N\in\R^{n\times p}$, the product
+$MN$ is defined and has dimensions $m\times p$:
+\[
+ \underbrace{(m\times n)(n\times p)}_{\text{inner dimensions must match}}
+ \quad\longrightarrow\quad m\times p.
+\]
+The entry in row $i$, column $j$ is the sum of the products of corresponding
+entries of row $i$ of $M$ and column $j$ of $N$:
+\begin{equation}
+ (MN)_{ij}=\sum_{k=1}^{n}m_{ik}n_{kj}.
+\end{equation}
+Matrix multiplication is therefore a row-by-column operation, rather than
+entrywise multiplication.
+
+For the matrices $A$ and $B$ above, the dimensions are
+$(3\times2)(2\times2)$, so $AB$ is a $3\times2$ matrix:
+\begin{align}
+ AB
+ &=\begin{bmatrix}1&2\\3&1\\0&1\end{bmatrix}
+   \begin{bmatrix}1&2\\1&1\end{bmatrix}\\
+ &=\begin{bmatrix}
+  1\cdot1+2\cdot1 & 1\cdot2+2\cdot1\\
+  3\cdot1+1\cdot1 & 3\cdot2+1\cdot1\\
+  0\cdot1+1\cdot1 & 0\cdot2+1\cdot1
+ \end{bmatrix}
+ =\begin{bmatrix}3&4\\4&7\\1&1\end{bmatrix}.
+ \label{eq:l01-AB}
+\end{align}
+
+\subsection{The order of the factors matters}
+Reversing the factors gives the dimensions $(2\times2)(3\times2)$. The inner
+dimensions do not match, so $BA$ is undefined, even though $AB$ exists.
+
+Even when both orders are defined, the results need not agree. With
+\[
+ E=\begin{bmatrix}1&2\\3&4\end{bmatrix},
+\]
+direct multiplication gives
+\[
+ BE=\begin{bmatrix}7&10\\4&6\end{bmatrix},
+ \qquad
+ EB=\begin{bmatrix}3&4\\7&10\end{bmatrix}.
+\]
+Thus $BE\ne EB$. Matrix multiplication is not commutative in general. Some
+particular matrices do commute, but factors cannot be exchanged without a
+reason that applies to the matrices in question.
+
+\section{The transpose}
+
+Transposing a matrix interchanges its rows and columns. In entry notation,
+$(M\trans)_{ij}=m_{ji}$. If $M$ has dimensions $m\times n$, then $M\trans$
+has dimensions $n\times m$. For the running example,
+\begin{equation}
+ A\trans=\begin{bmatrix}1&3&0\\2&1&1\end{bmatrix}\in\R^{2\times3}.
+\end{equation}
+
+The transpose of a product reverses the order of its factors:
+\begin{equation}
+ \boxed{(AB)\trans=B\trans A\trans.}
+ \label{eq:l01-transpose-product}
+\end{equation}
+The dimensions provide a quick check. Here $B\trans A\trans$ has dimensions
+$(2\times2)(2\times3)$, producing a $2\times3$ matrix as required. The
+incorrect expression $A\trans B\trans$ would have dimensions
+$(2\times3)(2\times2)$ and is undefined.
+
+Using the matrices defined above, this identity can be verified directly:
+\[
+ B\trans A\trans
+ =\begin{bmatrix}1&1\\2&1\end{bmatrix}
+  \begin{bmatrix}1&3&0\\2&1&1\end{bmatrix}
+ =\begin{bmatrix}3&4&1\\4&7&1\end{bmatrix}
+ =(AB)\trans.
+\]
+Dimension checks can rule out an invalid expression, but matching dimensions
+alone do not prove that an identity is correct.
+
+\section{Identity matrices and inverses}
+
+The identity matrix $I_n$ has ones on its main diagonal and zeros elsewhere.
+For a square matrix $M\in\R^{n\times n}$, an inverse $M^{-1}$ satisfies
+\begin{equation}
+ MM^{-1}=M^{-1}M=I_n.
+\end{equation}
+This ordinary, two-sided inverse is defined only for square matrices, and not
+every square matrix has one. The condition for invertibility is
+\begin{equation}
+ \boxed{\det(M)\ne0.}
+\end{equation}
+A square matrix with zero determinant is called \emph{singular}.
+
+\subsection{A one-by-one example}
+For $H=\begin{bmatrix}5\end{bmatrix}$, the inverse is
+$H^{-1}=\begin{bmatrix}1/5\end{bmatrix}$, since
+\[
+ HH^{-1}=H^{-1}H=\begin{bmatrix}1\end{bmatrix}=I_1.
+\]
+This is the familiar reciprocal operation for a nonzero scalar.
+
+\subsection{A diagonal example and its determinant}
+The second example is
+\[
+ G=\begin{bmatrix}1&0\\0&2\end{bmatrix},
+ \qquad
+ G^{-1}=\begin{bmatrix}1&0\\0&1/2\end{bmatrix}.
+\]
+Multiplying verifies the inverse:
+\[
+ GG^{-1}
+ =\begin{bmatrix}
+ 1\cdot1+0\cdot0&1\cdot0+0\cdot\tfrac12\\
+ 0\cdot1+2\cdot0&0\cdot0+2\cdot\tfrac12
+ \end{bmatrix}
+ =\begin{bmatrix}1&0\\0&1\end{bmatrix}=I_2.
+\]
+The reverse product also equals $I_2$. For a general $2\times2$ matrix,
+\[
+ \det\begin{bmatrix}a&b\\c&d\end{bmatrix}=ad-bc.
+\]
+Hence $\det(G)=1\cdot2-0\cdot0=2\ne0$, as required. Reciprocating the
+diagonal entries works here because $G$ is diagonal with nonzero diagonal
+entries; matrix inversion is not generally an entrywise reciprocal operation.
+
+\section{Orthogonal matrices}
+
+A real square matrix $L$ is \emph{orthogonal} if its inverse equals its
+transpose:
+\begin{equation}
+ \boxed{L^{-1}=L\trans.}
+\end{equation}
+Equivalently, $LL\trans=L\trans L=I$. This gives a practical way to check
+orthogonality: form the transpose, multiply, and verify the identity matrix.
+For an orthogonal matrix, an inverse can be obtained by transposing instead of
+performing a general inverse calculation.
+
+\subsection{Verifying orthogonality}
+Consider
+\[
+ L=\begin{bmatrix}
+ \tfrac12&\tfrac{\sqrt3}{2}\\
+ -\tfrac{\sqrt3}{2}&\tfrac12
+ \end{bmatrix},
+ \qquad
+ L\trans=\begin{bmatrix}
+ \tfrac12&-\tfrac{\sqrt3}{2}\\
+ \tfrac{\sqrt3}{2}&\tfrac12
+ \end{bmatrix}.
+\]
+Their product is
+\begin{align}
+ LL\trans
+ &=\begin{bmatrix}
+ \tfrac14+\tfrac34&-\tfrac{\sqrt3}{4}+\tfrac{\sqrt3}{4}\\
+ -\tfrac{\sqrt3}{4}+\tfrac{\sqrt3}{4}&\tfrac34+\tfrac14
+ \end{bmatrix}\\
+ &=\begin{bmatrix}1&0\\0&1\end{bmatrix}=I_2.
+\end{align}
+Thus $L$ is orthogonal and the displayed $L\trans$ is its inverse.
+
+\subsection{The trigonometric pattern}
+The preceding example belongs to the family
+\begin{equation}
+ Q(\theta)=\begin{bmatrix}
+ \sin\theta&\cos\theta\\
+ -\cos\theta&\sin\theta
+ \end{bmatrix}.
+ \label{eq:l01-Q}
+\end{equation}
+Multiplying by the transpose gives
+\begin{align*}
+ Q(\theta)Q(\theta)\trans
+ &=\begin{bmatrix}
+ \sin^2\theta+\cos^2\theta & -\sin\theta\cos\theta+\cos\theta\sin\theta\\
+ -\cos\theta\sin\theta+\sin\theta\cos\theta & \cos^2\theta+\sin^2\theta
+ \end{bmatrix}\\
+ &=I_2.
+\end{align*}
+The identity $\sin^2\theta+\cos^2\theta=1$ makes this family orthogonal for
+every real $\theta$.
+
+The numerical example corresponds to $L=Q(\pi/6)$, since
+$\sin(\pi/6)=1/2$ and $\cos(\pi/6)=\sqrt3/2$. An equivalent
+parameterization uses cosine on the diagonal:
+\[
+ P(\varphi)=\begin{bmatrix}
+ \cos\varphi&\sin\varphi\\
+ -\sin\varphi&\cos\varphi
+ \end{bmatrix}.
+\]
+The relation $Q(\theta)=P(\pi/2-\theta)$ follows from the complementary-angle
+identities. Thus the same numerical matrix is $L=P(\pi/3)$. In either
+parameterization, orthogonality follows from the same trigonometric identity.
+Such matrices provide a foundation for describing changes of orientation
+in robotics.
+\section{Key identities}
+For matrices of compatible dimensions, the operations developed in this
+chapter can be collected as follows:
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Operation or property & Rule \\
+\midrule
+Addition & $(M+N)_{ij}=m_{ij}+n_{ij}$ \\
+Multiplication & $(MN)_{ij}=\sum_{k=1}^{n}m_{ik}n_{kj}$ \\
+Transpose & $(M\trans)_{ij}=m_{ji}$ \\
+Transpose of a product & $(MN)\trans=N\trans M\trans$ \\
+Inverse & $MM^{-1}=M^{-1}M=I$ \\
+Invertibility of a square matrix & $\det(M)\ne0$ \\
+Orthogonality & $M^{-1}=M\trans$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+In the multiplication formula, $n$ is the number of columns of $M$ and the
+number of rows of $N$. Addition requires equal dimensions, whereas a product
+requires only that these inner dimensions match. Inverse and orthogonality
+conditions apply to square matrices. These distinctions determine which
+algebraic manipulations are valid before any numerical calculation begins.
+
+\clearpage
+\section{Additional exercises}
+Show your calculations and justify each conclusion. Check dimensions before
+performing an operation. These exercises can be completed by hand.
+
+\begin{enumerate}
+\item \textbf{Dimensions and valid operations.}
+Let $A\in\R^{3\times2}$, $B\in\R^{2\times3}$, and
+$C\in\R^{3\times3}$. Determine which expressions are defined and give the
+dimensions of each valid result:
+\[
+ A+B,\qquad AB,\qquad BA,\qquad CA,\qquad AC,\qquad
+ A\trans+C,\qquad B+A\trans.
+\]
+
+\item \textbf{Addition and multiplication.}
+Consider
+\[
+ M=\begin{bmatrix}2&-1\\0&3\end{bmatrix},\qquad
+ N=\begin{bmatrix}1&2\\-1&0\end{bmatrix},\qquad
+ v=\begin{bmatrix}1\\-2\end{bmatrix}.
+\]
+Compute $M+N$, $MN$, $NM$, and $Mv$. Do $M$ and $N$ commute?
+Verify numerically that $(M+N)v=Mv+Nv$.
+
+\item \textbf{Transposing a product.}
+Let
+\[
+ U=\begin{bmatrix}1&0&-1\\2&1&3\end{bmatrix},\qquad
+ V=\begin{bmatrix}1&2\\0&-1\\2&0\end{bmatrix}.
+\]
+Compute $UV$ and $(UV)\trans$, then independently compute
+$V\trans U\trans$ and compare the results. Is $U\trans V\trans$
+defined? Explain why it cannot equal $(UV)\trans$ in this example.
+
+\item \textbf{Determinants and inverses.}
+For
+\[
+ D=\begin{bmatrix}4&0\\0&-2\end{bmatrix},\qquad
+ F=\begin{bmatrix}1&2\\2&4\end{bmatrix},\qquad
+ K=\begin{bmatrix}2&1\\1&1\end{bmatrix},
+\]
+use determinants to decide which matrices are invertible. Find $D^{-1}$.
+Verify that $\begin{bmatrix}1&-1\\-1&2\end{bmatrix}$ is the inverse of
+$K$ by multiplying in both orders.
+
+\item \textbf{Testing orthogonality.}
+Consider
+\[
+ R=\begin{bmatrix}\tfrac35&-\tfrac45\\[2pt]\tfrac45&\tfrac35\end{bmatrix},
+ \qquad S=\begin{bmatrix}1&0\\0&-1\end{bmatrix},
+ \qquad T=\begin{bmatrix}1&1\\0&1\end{bmatrix}.
+\]
+Test each matrix for orthogonality using its transpose. For each orthogonal
+matrix, write its inverse. Is an invertible matrix necessarily orthogonal?
+Support your answer with one of these examples.
+
+\item \textbf{A product of orthogonal matrices.}
+Suppose $P$ and $Q$ are real orthogonal $n\times n$ matrices. Use the
+transpose-of-a-product rule to show that $(PQ)(PQ)\trans=I_n$.
+Deduce that $PQ$ is orthogonal and express $(PQ)^{-1}$ in terms of
+$P\trans$ and $Q\trans$, paying attention to their order.
+\end{enumerate}

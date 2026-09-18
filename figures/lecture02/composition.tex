@@ -1,0 +1,15 @@
+\begin{tikzpicture}[scale=1.05]
+\draw[axis] (0,0)--(3.7,0) node[right] {$x_W$};
+\draw[axis] (0,0)--(0,3.4) node[above] {$y_W$};
+\draw[axis,robotframe] (0,0)--(25:3.7) node[right] {$x_R$};
+\draw[axis,robotframe] (0,0)--(115:3) node[above] {$y_R$};
+\draw[axis,sensorframe] (0,0)--(55:3.7) node[above right] {$x_S$};
+\draw[axis,sensorframe] (0,0)--(145:3) node[above left] {$y_S$};
+\draw[-{Stealth},robotframe] (.8,0) arc (0:25:.8);
+\node[robotframe] at (12.5:1.05) {$\theta$};
+\draw[-{Stealth},sensorframe] (25:1.5) arc (25:55:1.5);
+\node[sensorframe] at (40:1.76) {$\varphi$};
+\draw[thick] (0,0)--(75:3.2);
+\fill (75:3.2) circle (2pt) node[right] {$B$};
+\node[below left] at (0,0) {$O$};
+\end{tikzpicture}

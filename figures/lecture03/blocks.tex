@@ -1,0 +1,23 @@
+\begin{tikzpicture}
+\fill[robotframe!10] (0,1) rectangle (2,3);
+\fill[sensorframe!12] (2,1) rectangle (3,3);
+\draw[thick] (0,0) rectangle (3,3);
+\draw[dashed] (2,0)--(2,3) (0,1)--(3,1);
+\node at (1,2) {$R_R^W$};
+\node at (2.5,2) {$p_R^W$};
+\node at (1,.5) {$0\quad0$};
+\node at (2.5,.5) {$1$};
+\node[above] at (1.5,3.1) {$H_R^W$};
+\draw[axis] (3.5,1.5)--(4.7,1.5) node[midway,above] {inverse};
+\begin{scope}[shift={(5.2,0)}]
+\fill[robotframe!10] (0,1) rectangle (2,3);
+\fill[sensorframe!12] (2,1) rectangle (4.2,3);
+\draw[thick] (0,0) rectangle (4.2,3);
+\draw[dashed] (2,0)--(2,3) (0,1)--(4.2,1);
+\node at (1,2) {$(R_R^W)\trans$};
+\node at (3.1,2) {$-(R_R^W)\trans p_R^W$};
+\node at (1,.5) {$0\quad0$};
+\node at (3.1,.5) {$1$};
+\node[above] at (2.1,3.1) {$H_W^R$};
+\end{scope}
+\end{tikzpicture}

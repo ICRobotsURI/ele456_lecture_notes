@@ -1,0 +1,23 @@
+\begin{tikzpicture}[scale=1.1]
+\coordinate (R) at (2,.8);
+\coordinate (S) at (3.1,2.3);
+\coordinate (B) at (4.8,3.4);
+\draw[axis] (0,0)--(5.8,0) node[right] {$x_W$};
+\draw[axis] (0,0)--(0,4) node[above] {$y_W$};
+\node[below left] at (0,0) {$O_W$};
+\begin{scope}[shift={(R)}]
+\draw[axis,robotframe] (0,0)--(20:1.2) node[right] {$x_R$};
+\draw[axis,robotframe] (0,0)--(110:1.2) node[above] {$y_R$};
+\end{scope}
+\begin{scope}[shift={(S)}]
+\draw[axis,sensorframe] (0,0)--(-10:1.2) node[right] {$x_S$};
+\draw[axis,sensorframe] (0,0)--(80:1.2) node[above] {$y_S$};
+\end{scope}
+\draw[axis,black!75] (0,0)--(R) node[midway,below] {$p_R^W$};
+\draw[axis,black!75] (R)--(S) node[midway,right] {$R_R^W p_S^R$};
+\draw[axis,black!75] (S)--(B) node[midway,below right] {$R_S^W B^S$};
+\draw[projection] (0,0)--(B);
+\fill (B) circle (1.5pt) node[right] {$B$};
+\fill (R) circle (1.5pt) node[below right] {$O_R$};
+\fill (S) circle (1.5pt) node[below left] {$O_S$};
+\end{tikzpicture}

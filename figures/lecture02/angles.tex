@@ -1,0 +1,18 @@
+\begin{tikzpicture}[scale=.95]
+\coordinate (B) at (58:3.6);
+\draw[axis] (0,0)--(4,0) node[right] {$x_W$};
+\draw[axis] (0,0)--(0,3.65) node[above] {$y_W$};
+\draw[axis,robotframe] (0,0)--(25:4) node[right] {$x_R$};
+\draw[axis,robotframe] (0,0)--(115:2.8) node[above] {$y_R$};
+\draw[thick,sensorframe] (0,0)--(B) node[midway,above left] {$d$};
+\fill (B) circle (2pt) node[above right] {$B$};
+\draw[projection] (B)--({3.6*cos(58)},0) node[below] {$x_B^W$};
+\draw[projection] (B)--(0,{3.6*sin(58)}) node[left] {$y_B^W$};
+\draw[-{Stealth}] (.8,0) arc (0:25:.8);
+\node at (12.5:1.05) {$\theta$};
+\draw[-{Stealth},robotframe] (25:1.3) arc (25:58:1.3);
+\node[robotframe] at (41.5:1.57) {$\alpha$};
+\draw[-{Stealth},sensorframe] (2.35,0) arc (0:58:2.35);
+\node[sensorframe,fill=white,inner sep=2pt] at (40:2.35) {$\beta$};
+\node at (3.45,3.2) {$\beta=\alpha+\theta$};
+\end{tikzpicture}

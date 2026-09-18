@@ -1,0 +1,21 @@
+\begin{tikzpicture}[scale=2.1]
+\draw[axis] (-.85,0)--(1.3,0) node[right] {$x_W$};
+\draw[axis] (0,-.15)--(0,1.25) node[above] {$y_W$};
+\draw[axis,robotframe] (0,0)--(30:1) node[above right] {$\boldsymbol{x}_R$};
+\draw[axis,robotframe] (0,0)--(120:1) node[above left] {$\boldsymbol{y}_R$};
+\draw[projection] (30:1)--({cos(30)},0) node[below] {$\cos\theta$};
+\draw[projection] (30:1)--(0,.5) node[right,fill=white,inner sep=1pt] {$\sin\theta$};
+\draw[projection] (120:1)--(-.5,0) node[below] {$-\sin\theta$};
+\draw[projection] (120:1)--(0,{sin(120)}) node[right] {$\cos\theta$};
+\draw[-{Stealth}] (.32,0) arc (0:30:.32);
+\node at (15:.48) {$\theta$};
+\begin{scope}[shift={(2,0.15)},scale=.8]
+\draw[thick] (0,0)--(1.1,0)--(1.1,.635)--cycle;
+\node[below] at (.55,0) {$\cos\theta$};
+\node[right] at (1.1,.32) {$\sin\theta$};
+\node[above left] at (.55,.32) {$1$};
+\draw (.35,0) arc (0:30:.35);
+\node at (15:.55) {$\theta$};
+\draw (.99,0)--(.99,.11)--(1.1,.11);
+\end{scope}
+\end{tikzpicture}
