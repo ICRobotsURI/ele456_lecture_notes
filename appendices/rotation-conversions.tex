@@ -1,0 +1,131 @@
+\chapter{Rotation representation conversions}
+\label{app:rotation-conversions}
+\begingroup
+\small
+
+This reference collects conversions between rotation matrices,
+roll--pitch--yaw (RPY) angles, and unit quaternions. The matrix and angle
+conventions agree with Chapter~\ref{chap:lecture04}, which introduces the
+practical use of unit quaternions.
+
+\section*{Conventions}
+All frames are right-handed, vectors are columns, and
+\[
+ R=R_z(\psi)R_y(\theta)R_x(\varphi)\in SO(3),\qquad
+ SO(3)=\{R\in\R^{3\times3}:R\trans R=I_3,\ \det R=1\}.
+\]
+The angles are roll $\varphi$, pitch $\theta$, and yaw $\psi$, with principal
+ranges $\varphi,\psi\in(-\pi,\pi]$ and $\theta\in[-\pi/2,\pi/2]$.
+Quaternions use the scalar-first convention
+\[
+ q=\begin{bmatrix}q_w&q_x&q_y&q_z\end{bmatrix}\trans,\qquad
+ q_w^2+q_x^2+q_y^2+q_z^2=1.
+\]
+The signs in the formulas below specify the quaternion convention; a different
+component order must be converted before applying them. The quaternions $q$
+and $-q$ represent the same rotation. Write $c_a=\cos a$ and $s_a=\sin a$.
+The function $\operatorname{atan2}(y,x)$ takes its arguments in that order.
+
+\section*{RPY angles to a rotation matrix}
+\[
+ R=\begin{bmatrix}
+ c_\psi c_\theta & c_\psi s_\theta s_\varphi-s_\psi c_\varphi & c_\psi s_\theta c_\varphi+s_\psi s_\varphi\\
+ s_\psi c_\theta & s_\psi s_\theta s_\varphi+c_\psi c_\varphi & s_\psi s_\theta c_\varphi-c_\psi s_\varphi\\
+ -s_\theta & c_\theta s_\varphi & c_\theta c_\varphi
+ \end{bmatrix}.
+\]
+
+\section*{Rotation matrix to RPY angles}
+For $R=[r_{ij}]$ and $|\theta|<\pi/2$,
+the angles are recovered by the formulas below. At $\theta=\pm\pi/2$, yaw
+and roll are not separately determined; a singular-case convention is required.
+In particular, $\operatorname{atan2}(0,0)$ has no unique geometric meaning.
+\[
+ \begin{aligned}
+ \varphi&=\operatorname{atan2}(r_{32},r_{33}),\\
+ \theta&=\operatorname{atan2}\!\left(-r_{31},\sqrt{r_{32}^2+r_{33}^2}\right),\\
+ \psi&=\operatorname{atan2}(r_{21},r_{11}).
+ \end{aligned}
+\]
+\clearpage
+\section*{Unit quaternion to a rotation matrix}
+\[
+ R=\begin{bmatrix}
+ 1-2(q_y^2+q_z^2)&2(q_xq_y-q_wq_z)&2(q_xq_z+q_wq_y)\\
+ 2(q_xq_y+q_wq_z)&1-2(q_x^2+q_z^2)&2(q_yq_z-q_wq_x)\\
+ 2(q_xq_z-q_wq_y)&2(q_yq_z+q_wq_x)&1-2(q_x^2+q_y^2)
+ \end{bmatrix}.
+\]
+This expression assumes a unit quaternion. Normalize a nonzero quaternion
+before using it; a zero quaternion does not describe an orientation.
+
+\section*{RPY angles to a unit quaternion}
+Using the same intrinsic Z--Y--X convention,
+\[
+ \begin{aligned}
+ q_w&=c_{\varphi/2}c_{\theta/2}c_{\psi/2}
+       +s_{\varphi/2}s_{\theta/2}s_{\psi/2},\\
+ q_x&=s_{\varphi/2}c_{\theta/2}c_{\psi/2}
+       -c_{\varphi/2}s_{\theta/2}s_{\psi/2},\\
+ q_y&=c_{\varphi/2}s_{\theta/2}c_{\psi/2}
+       +s_{\varphi/2}c_{\theta/2}s_{\psi/2},\\
+ q_z&=c_{\varphi/2}c_{\theta/2}s_{\psi/2}
+       -s_{\varphi/2}s_{\theta/2}c_{\psi/2}.
+ \end{aligned}
+\]
+
+\section*{Unit quaternion to RPY angles}
+Away from the pitch singularities,
+\[
+ \begin{aligned}
+ \varphi&=\operatorname{atan2}\!\left(2(q_wq_x+q_yq_z),\,
+                      1-2(q_x^2+q_y^2)\right),\\
+ \theta&=\arcsin\!\left(2(q_wq_y-q_zq_x)\right),\\
+ \psi&=\operatorname{atan2}\!\left(2(q_wq_z+q_xq_y),\,
+                      1-2(q_y^2+q_z^2)\right).
+ \end{aligned}
+\]
+For a normalized quaternion, the exact argument of $\arcsin$ lies in $[-1,1]$.
+In floating-point arithmetic, clamp small roundoff excursions to that interval
+before evaluating $\arcsin$. This does not resolve the pitch singularity,
+nor does it replace checking the quaternion's normalization.
+
+\clearpage
+\section*{Rotation matrix to a unit quaternion}
+One conversion branch chooses $q_w\ge0$:
+\[
+ \begin{aligned}
+ q_w&=\tfrac12\sqrt{1+r_{11}+r_{22}+r_{33}},\\
+ q_x&=\frac{r_{32}-r_{23}}{4q_w},\qquad
+ q_y=\frac{r_{13}-r_{31}}{4q_w},\qquad
+ q_z=\frac{r_{21}-r_{12}}{4q_w}.
+ \end{aligned}
+\]
+\textbf{This branch requires $q_w\ne0$.} It fails for an exact half-turn
+and is numerically sensitive near a half-turn. A robust implementation selects
+a branch whose denominator is large. The following equivalent identities
+provide the alternative branches:
+\[
+ \begin{aligned}
+ 4q_w^2&=1+r_{11}+r_{22}+r_{33},&
+ 4q_x^2&=1+r_{11}-r_{22}-r_{33},\\
+ 4q_y^2&=1-r_{11}+r_{22}-r_{33},&
+ 4q_z^2&=1-r_{11}-r_{22}+r_{33}.
+ \end{aligned}
+\]
+Choose a largest squared component, assign its positive square root, and
+recover the other components from
+\[
+ \begin{aligned}
+ 4q_wq_x&=r_{32}-r_{23},&4q_xq_y&=r_{12}+r_{21},\\
+ 4q_wq_y&=r_{13}-r_{31},&4q_xq_z&=r_{13}+r_{31},\\
+ 4q_wq_z&=r_{21}-r_{12},&4q_yq_z&=r_{23}+r_{32}.
+ \end{aligned}
+\]
+For example, if $q_x$ is chosen, divide the identities for $q_wq_x$,
+$q_xq_y$, and $q_xq_z$ by $4q_x$ to obtain $q_w,q_y,q_z$. For a valid
+rotation at least one component has magnitude at least $1/2$. Normalize
+the resulting quaternion to remove small numerical drift. These formulas
+assume the input is a proper rotation matrix; they do not repair an arbitrary matrix.
+\par
+\endgroup

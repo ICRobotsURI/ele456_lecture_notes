@@ -1,0 +1,12 @@
+\begin{tikzpicture}[box/.style={draw,rounded corners,align=center,minimum height=1cm,minimum width=2.6cm}]
+\draw[rounded corners,robotframe,thick] (-2.1,-2) rectangle (5.4,2);
+\node[robotframe,fill=white] at (1.8,2) {Robot};
+\node[box] (I) at (0,0) {Processing, planning,\\and control};
+\node[box] (A) at (3.7,1) {Actuators};
+\node[box] (S) at (3.7,-1) {Sensors};
+\node[box,minimum width=2cm,minimum height=3cm] (E) at (7.2,0) {Environment};
+\draw[axis] (I.north) |- (A.west) node[pos=.7,above] {commands};
+\draw[axis] (S.west) -| (I.south) node[pos=.35,below] {measurements};
+\draw[axis] (A.east)--(A.east -| E.west) node[midway,above] {action};
+\draw[axis] (S.east -| E.west)--(S.east);
+\end{tikzpicture}

@@ -1,0 +1,17 @@
+\begin{tikzpicture}[scale=1.1]
+\coordinate (O) at (0,0);
+\coordinate (R) at (2.8,1.5);
+\coordinate (B) at (4.5,3.5);
+\draw[axis] (O)--(-1,-1) node[below] {$x_W$};
+\draw[axis] (O)--(5.6,0) node[right] {$y_W$};
+\draw[axis] (O)--(0,4) node[above] {$z_W$};
+\draw[axis,robotframe] (R)--(3.6,.7) node[right] {$x_R$};
+\draw[axis,robotframe] (R)--(4.2,1.8) node[right] {$y_R$};
+\draw[axis,robotframe] (R)--(2.4,2.9) node[left] {$z_R$};
+\draw[axis,sensorframe] (O)--(R) node[midway,below right] {$p_R^W$};
+\draw[axis,sensorframe] (R)--(B) node[midway,right] {$R_R^W B^R$};
+\draw[axis] (O)--(B) node[pos=.57,above left] {$B^W$};
+\fill (R) circle(1.5pt) node[below left] {$O_R$};
+\fill (B) circle(1.5pt) node[above right] {$B$};
+\node[below left] at (O) {$O_W$};
+\end{tikzpicture}

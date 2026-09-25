@@ -1,0 +1,11 @@
+\begin{tikzpicture}
+\foreach \x/\frame in {0/W,3/1,6/2,9/3} {
+ \node[draw,rounded corners,minimum width=1cm,minimum height=.8cm] (f\frame) at (\x,0) {Frame $\frame$};
+}
+\draw[axis] (fW)--(f1) node[midway,above] {yaw $\psi$} node[midway,below] {about $z_W$};
+\draw[axis] (f1)--(f2) node[midway,above] {pitch $\theta$} node[midway,below] {about $y_1$};
+\draw[axis] (f2)--(f3) node[midway,above] {roll $\varphi$} node[midway,below] {about $x_2$};
+\node at (1.5,-1.15) {$z_1=z_W$};
+\node at (4.5,-1.15) {$y_2=y_1$};
+\node at (7.5,-1.15) {$x_3=x_2$};
+\end{tikzpicture}

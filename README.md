@@ -23,7 +23,9 @@ remain; please report suspected mistakes to help improve the notes.
 
 ## Contents
 
-One LaTeX chapter per class. The first chapter combines the September 10, 2026
+Chapters are organized by topic and may draw on more than one class.
+Original inputs remain grouped by lecture under `lectures/`.
+The first chapter combines the September 10, 2026
 board image and transcript into a textbook-style chapter titled
 "Introduction and linear algebra," with definitions and worked matrix examples.
 Course logistics and recording references are excluded from the student notes.
@@ -32,6 +34,19 @@ transformations with six editable TikZ figures and an additional exercise page.
 Chapter 3, "Planar rigid transformations and homogeneous coordinates," adds
 translation, homogeneous matrices, composition, and inversion, with four TikZ
 figures and a page of exercises.
+Chapter 4, "Three-dimensional rotations and orientation representations," develops
+elementary spatial rotations, the intrinsic Z--Y--X convention, and angle
+recovery, with vector diagrams, a practical unit-quaternion introduction from
+lecture 05, and seven practice exercises.
+Chapter 5, "Three-dimensional rigid transformations and pose," covers spatial
+homogeneous transformations, inversion, numerical rounding, and pose, with
+a vector diagram and seven exercises.
+Chapter 6, "Robot systems and sensing," introduces sensing, actuation,
+processing, and the robot--environment feedback loop using the end of lecture
+05. Its opening and vector schematic are included in the PDF; later lectures
+will extend the chapter.
+Appendix A collects the rotation-conversion reference formulas, including
+scalar-first unit quaternions and singular-case notes.
 
 ## Build
 
@@ -54,18 +69,28 @@ On Overleaf, upload the project and select `main.tex` as the main document.
 - `chapters/lecture01.tex`: first lecture notes.
 - `chapters/lecture02.tex`: second lecture notes.
 - `chapters/lecture03.tex`: third lecture notes.
+- `chapters/lecture04.tex`: Chapter 4, drawing on lectures 04 and 05.
+- `chapters/lecture05.tex`: Chapter 5, spatial transformations and pose.
+- `chapters/lecture06.tex`: Chapter 6 opening on robot systems and sensing.
+- `appendices/rotation-conversions.tex`: conversion reference adapted from the supplied handout.
 - `figures/lecture02/`: vector diagrams drawn in TikZ and included by the chapter.
 - `figures/lecture03/`: diagrams for affine and homogeneous transformations.
+- `figures/lecture04/`: elementary rotations, angle sequence, and atan2 diagrams.
+- `figures/lecture05/`: spatial coordinate-transformation diagram.
+- `figures/lecture06/`: robot feedback diagram.
 - `chapters/lecture-template.tex`: starting point for future lectures.
-- `lectures/01/`, `02/`, `03/`: original boards and transcripts, preserved unchanged.
+- `lectures/`: original boards and transcripts (local only, excluded from Git).
 - `editorial-notes.md`: source decisions and details requiring confirmation.
 
 ## Add a lecture
 
-1. Put its board material and transcript in `lectures/04/`, then `05/`, etc.
-2. Copy `chapters/lecture-template.tex` to `chapters/lecture04.tex`.
-3. Set a descriptive chapter title and unique labels, and write the notes.
-4. Add `\input{chapters/lecture04}` after the third chapter in `main.tex`.
+1. Put the next board material and transcript in `lectures/06/`, then `07/`, etc.
+2. Assign each topic to the appropriate chapter, extending an existing chapter
+   when a class continues that topic. Record the source mapping in `editorial-notes.md`.
+3. Extend Chapter 6 with the next relevant lecture. For later new
+   chapters, copy `chapters/lecture-template.tex` and use a descriptive title
+   and unique labels. The `lectureNN.tex` filenames now identify chapter slots.
+4. Include new chapters in `main.tex` before `\appendix`.
 5. Build twice. Chapter, section, and equation numbering update automatically.
 
 Use board images to resolve spoken matrix entries and the transcript to explain

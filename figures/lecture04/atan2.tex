@@ -1,0 +1,11 @@
+\begin{tikzpicture}[scale=1.65]
+\draw[axis] (-1.5,0)--(1.65,0) node[right] {$x$};
+\draw[axis] (0,-1.4)--(0,1.5) node[above] {$y$};
+\draw[gray] (0,0) circle (1);
+\draw[axis,sensorframe] (0,0)--(45:1.25) node[above right] {$(1,1)$};
+\draw[axis,robotframe] (0,0)--(225:1.25) node[below left] {$(-1,-1)$};
+\draw[-{Stealth},sensorframe] (.55,0) arc (0:45:.55);
+\node[sensorframe] at (25:.85) {$\pi/4$};
+\draw[-{Stealth},robotframe] (.38,0) arc (0:-135:.38);
+\node[robotframe] at (-65:.85) {$-3\pi/4$};
+\end{tikzpicture}

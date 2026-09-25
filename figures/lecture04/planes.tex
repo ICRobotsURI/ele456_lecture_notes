@@ -1,0 +1,16 @@
+\begin{tikzpicture}[scale=.8]
+\foreach \shift/\horizontal/\vertical/\angle/\moving in {
+0/x_W/y_W/\psi/x_R,5.1/z_W/x_W/\theta/z_R,10.2/y_W/z_W/\varphi/y_R} {
+\begin{scope}[shift={(\shift,0)}]
+\draw[axis] (0,0)--(2.7,0) node[right] {$\horizontal$};
+\draw[axis] (0,0)--(0,2.5) node[above] {$\vertical$};
+\draw[axis,robotframe] (0,0)--(35:2.2) node[above right] {$\moving$};
+\draw[projection] (35:2.2)--({2.2*cos(35)},0);
+\draw[projection] (35:2.2)--(0,{2.2*sin(35)});
+\node[below] at (.9,0) {$\cos\angle$};
+\node[left] at (0,.65) {$\sin\angle$};
+\draw[-{Stealth}] (.65,0) arc (0:35:.65);
+\node at (17.5:.95) {$\angle$};
+\end{scope}
+}
+\end{tikzpicture}

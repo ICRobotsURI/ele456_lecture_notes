@@ -1,0 +1,28 @@
+% Three exact 3D constructions projected onto the page; lengths in the
+% projection are not physical lengths. The red axes are matrix columns.
+\begin{tikzpicture}[x={(-.65cm,-.4cm)},y={(.85cm,-.25cm)},z={(0cm,.95cm)}]
+\foreach \panel/\name in {0/z,4.8/y,9.6/x} {
+\begin{scope}[shift={(\panel cm,0cm)}]
+\draw[axis] (0,0,0)--(1.8,0,0) node[below left] {$x_W$};
+\draw[axis] (0,0,0)--(0,1.8,0) node[right] {$y_W$};
+\draw[axis] (0,0,0)--(0,0,1.8) node[above] {$z_W$};
+\if\name z
+ \draw[axis,robotframe] (0,0,0)--({1.5*cos(35)},{1.5*sin(35)},0) node[below] {$x_R$};
+ \draw[axis,robotframe] (0,0,0)--({-1.5*sin(35)},{1.5*cos(35)},0) node[right] {$y_R$};
+ \draw[axis,robotframe] (0,0,0)--(0,0,1.5) node[left] {$z_R$};
+\fi
+\if\name y
+ \draw[axis,robotframe] (0,0,0)--({1.5*cos(35)},0,{-1.5*sin(35)}) node[below] {$x_R$};
+ \draw[axis,robotframe] (0,0,0)--(0,1.5,0) node[above] {$y_R$};
+ \draw[axis,robotframe] (0,0,0)--({1.5*sin(35)},0,{1.5*cos(35)}) node[left] {$z_R$};
+\fi
+\if\name x
+ \draw[axis,robotframe] (0,0,0)--(1.5,0,0) node[above left] {$x_R$};
+ \draw[axis,robotframe] (0,0,0)--(0,{1.5*cos(35)},{1.5*sin(35)}) node[right] {$y_R$};
+ \draw[axis,robotframe] (0,0,0)--(0,{-1.5*sin(35)},{1.5*cos(35)}) node[left] {$z_R$};
+\fi
+\node at (0,-1.7,0) {};
+\node[anchor=north] at (0cm,-1.8cm) {$R_{\name}$: rotation about $\name$};
+\end{scope}
+}
+\end{tikzpicture}

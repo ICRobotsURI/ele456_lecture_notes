@@ -1,0 +1,98 @@
+% Opening from lecture 05; extend with subsequent lectures on sensing.
+\chapter{Robot systems and sensing}
+\label{chap:lecture06}
+
+Reference frames and transformations describe where a robot and the objects
+around it are located. A robot must also obtain information about those objects,
+decide what to do, and produce physical motion. These activities connect the
+geometric tools of the preceding chapters to the operation of a robot system.
+
+\section{Sensing, processing, and action}
+A useful working description of a robot is an intelligent interconnection
+between sensing and action. Sensors collect measurements; computation uses
+those measurements to select actions; actuators carry out the actions.
+The resulting interaction with the environment produces new measurements,
+closing a feedback loop.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture06/components}
+\caption{A functional view of a robot interacting with its environment.
+The robot boundary contains sensors, actuators, and the hardware and software
+that process measurements and generate commands.}
+\label{fig:l06-components}
+\end{figure}
+
+\section{Sensors and the environment}
+The \emph{environment} includes the objects, surfaces, and people with which
+the robot interacts. A camera measures incoming light, a microphone responds
+to pressure variations, and a contact sensor detects physical contact.
+Sensors may also measure the robot's own state; sensing is not limited to
+observing external objects.
+
+A measurement is not yet an interpretation of the scene. An image records
+light arriving at the camera; identifying an object and estimating its
+location require processing that image. Likewise, a contact measurement
+indicates an interaction at a surface but does not by itself describe the
+entire surrounding space. Each type of sensor provides particular information
+that the robot must interpret in relation to its task.
+
+The coordinate transformations developed earlier enter at this point. An
+object located in a sensor frame may need to be expressed in a robot frame
+to determine whether it is within reach, or in a world frame to plan motion.
+The physical object is the same; the coordinate description is chosen to
+support the calculation being performed.
+
+\section{Actuators and physical interaction}
+\emph{Actuators} produce physical action, for example by driving wheels or
+moving a manipulator. Wheel-driven motion depends on forces exchanged with
+the supporting surface. An action may change the environment, the robot's
+pose relative to it, or both.
+
+The distinction between sensing and action is a useful functional one:
+sensors provide measurements, whereas actuators produce physical effects.
+A motor command can turn a wheel or move a joint, but the resulting motion
+also depends on the mechanism and its interaction with the surroundings.
+Moving a mobile robot changes what its sensors observe, even when the objects
+in the environment remain fixed in the world frame.
+
+\section{Connecting measurements to commands}
+The connection between sensing and action includes both computing hardware
+and software. It may involve interpreting measurements, estimating where
+objects are, selecting a plan, and producing individual actuator commands.
+Here, ``intelligent'' does not require a neural network or machine learning:
+explicit algorithms and feedback control can also provide this connection.
+
+The central block in Figure~\ref{fig:l06-components} therefore represents
+several possible levels of computation. A high-level decision might be to
+approach an object. More detailed decisions specify how to move, and the
+commands sent to the actuators must ultimately specify actions that the
+hardware can execute. All of these functions belong to the connection
+between measurements and physical action, even when they run in different
+programs or on different processors.
+
+The enclosing boundary in the diagram is also important: the robot includes
+the sensors and actuators as well as the computing hardware and software.
+The central block alone is not the entire robot. The arrows trace a loop
+through the environment: an action changes the physical situation, sensors
+measure the resulting situation, and computation can use those measurements
+to decide the next action.
+
+\subsection{Example: reaching an object}
+Suppose a robot must grasp an object that is initially beyond its reach.
+Sensor measurements first support an estimate of the object's location.
+The robot must then determine that it needs to move closer, choose an approach,
+and command its motion before extending the manipulator and closing the gripper.
+A high-level objective thus becomes a sequence of physical actions, with
+measurements available to check progress and adjust the commands.
+
+Consider the distinction between the decisions involved. Recognizing the
+object answers what the robot should interact with. Estimating its position
+answers where it is. Comparing that position with the robot's reach determines
+whether the base must move first. Planning selects a sequence of motions,
+and control turns those motions into actuator commands. These decisions
+serve the same task but require different information and computations.
+
+After the robot approaches, the object's coordinates relative to the robot
+have changed. New measurements can update its estimated location before the
+grasp. This illustrates why sensing and action are connected repeatedly:
+the robot does not merely observe once and then execute an unrelated motion.

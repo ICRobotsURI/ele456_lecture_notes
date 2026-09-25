@@ -1,0 +1,291 @@
+\chapter{Three-dimensional rigid transformations and pose}
+\label{chap:lecture05}
+
+A spatial reference frame can differ from another in both its origin and its
+orientation. Combining translation with the rotations developed in
+Chapter~\ref{chap:lecture04} gives a description of the pose of a rigid body.
+The geometry follows the planar construction: rotate a point's coordinates
+into the destination frame, then add the displacement between origins.
+The vectors now have three components, and homogeneous transformations have
+four rows and four columns.
+
+\section{Combining spatial rotation and translation}
+Let $W$ be a world frame and $R$ a frame attached to a rigid body. Define
+\[
+ p_R^W\in\R^3,\qquad R_R^W\in\R^{3\times3},
+\]
+where $p_R^W$ is the position of the origin $O_R$ expressed in $W$, and
+$R_R^W$ maps vector components from $R$ to $W$. The matrix is a proper
+rotation: $(R_R^W)\trans R_R^W=I_3$ and $\det R_R^W=1$.
+
+If a sensor reports a point $B$ using coordinates $B^R$, its world coordinates
+are obtained by adding two displacements expressed in the same frame:
+\begin{equation}
+ \boxed{B^W=R_R^W B^R+p_R^W.}
+ \label{eq:l05-affine}
+\end{equation}
+The first term describes the displacement from $O_R$ to $B$ in world
+components; the second locates $O_R$ relative to $O_W$.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture05/geometry}
+\caption{Spatial coordinate transformation. The displacement from $O_W$ to
+$B$ is the sum of the displacement to $O_R$ and the displacement from $O_R$
+to $B$. All three labeled displacement vectors use world components.
+The perspective sketch illustrates the geometry, not the numerical example.}
+\label{fig:l05-geometry}
+\end{figure}
+
+The dimensions provide a useful check:
+\[
+ \underbrace{B^W}_{3\times1}
+ =\underbrace{R_R^W}_{3\times3}\underbrace{B^R}_{3\times1}
+ +\underbrace{p_R^W}_{3\times1}.
+\]
+Rotation alone maps direction vectors between frames. Translation is required
+for point coordinates because the two origins can differ. For example,
+subtracting the transformed coordinates of two points cancels $p_R^W$,
+leaving only the rotation of their displacement.
+
+\subsection{Worked example}
+Take
+\[
+ p_R^W=\begin{bmatrix}1\\0\\2\end{bmatrix},\qquad
+ B^R=\begin{bmatrix}2\\0\\1\end{bmatrix},\qquad
+ R_R^W=R_z(\pi/4)=\begin{bmatrix}c&-c&0\\c&c&0\\0&0&1\end{bmatrix},
+ \quad c=\frac{\sqrt2}{2}.
+\]
+The rotation is about $z$, chosen to simplify the arithmetic; the transformation
+law applies equally to a general spatial rotation. Substitution gives
+\begin{equation}
+ B^W=\begin{bmatrix}2c\\2c\\1\end{bmatrix}
+      +\begin{bmatrix}1\\0\\2\end{bmatrix}
+     =\begin{bmatrix}1+\sqrt2\\\sqrt2\\3\end{bmatrix}.
+ \label{eq:l05-example}
+\end{equation}
+
+\section{The reverse coordinate transformation}
+To recover the coordinates in $R$, first subtract the origin's world position
+and then apply the inverse rotation:
+\begin{equation}
+ \boxed{B^R=(R_R^W)\trans(B^W-p_R^W).}
+ \label{eq:l05-reverse}
+\end{equation}
+The order matters. The subtraction takes place in $W$; the transpose then
+converts that displacement into $R$ components. For the example,
+\[
+ B^R=\begin{bmatrix}c&c&0\\-c&c&0\\0&0&1\end{bmatrix}
+ \begin{bmatrix}\sqrt2\\\sqrt2\\1\end{bmatrix}
+ =\begin{bmatrix}2\\0\\1\end{bmatrix}.
+\]
+
+\section{Homogeneous transformations in space}
+Introduce homogeneous point coordinates by appending a one:
+\[
+ \widetilde B^R=\begin{bmatrix}B^R\\1\end{bmatrix}\in\R^4.
+\]
+The spatial homogeneous transformation is
+\begin{equation}
+ H_R^W=\begin{bmatrix}R_R^W&p_R^W\\0_{1\times3}&1\end{bmatrix}
+ \in\R^{4\times4},\qquad
+ \boxed{\widetilde B^W=H_R^W\widetilde B^R.}
+ \label{eq:l05-homogeneous}
+\end{equation}
+The lower-left block contains three zeros. Block multiplication reproduces
+Equation~\eqref{eq:l05-affine} in the first three rows and preserves the final
+one. Lines drawn between blocks are visual guides, not extra operations.
+
+For the worked example,
+\[
+ H_R^W=\begin{bmatrix}
+ c&-c&0&1\\c&c&0&0\\0&0&1&2\\0&0&0&1
+ \end{bmatrix},\qquad
+ H_R^W\begin{bmatrix}2\\0\\1\\1\end{bmatrix}
+ =\begin{bmatrix}1+\sqrt2\\\sqrt2\\3\\1\end{bmatrix}.
+\]
+The last entry is a consistency check for this representation of a point under
+a rigid transformation. A direction vector is instead augmented with zero;
+then multiplication rotates the direction without adding a translation.
+
+\subsection{Composition follows the frame chain}
+The advantage of homogeneous coordinates remains the same as in the planar
+case. For an intermediate frame $R$ and a sensor frame $S$,
+\begin{equation}
+ H_S^W=H_R^W H_S^R.
+ \label{eq:l05-composition}
+\end{equation}
+Expanding the blocks gives
+\[
+ H_S^W=\begin{bmatrix}
+ R_R^W R_S^R&R_R^W p_S^R+p_R^W\\0_{1\times3}&1
+ \end{bmatrix}.
+\]
+Thus the rotation composes by multiplication, while the sensor-origin
+displacement must be rotated into $W$ before adding $p_R^W$. The rightmost
+map acts first: $S\to R\to W$. This is the spatial version of the earlier
+frame-chain rule.
+
+\section{Inverting a homogeneous transformation}
+Rearranging Equation~\eqref{eq:l05-reverse} separates the reverse rotation
+and translation:
+\[
+ B^R=(R_R^W)\trans B^W-(R_R^W)\trans p_R^W.
+\]
+Consequently,
+\begin{equation}
+ \boxed{H_W^R=(H_R^W)^{-1}
+ =\begin{bmatrix}(R_R^W)\trans&-(R_R^W)\trans p_R^W\\0_{1\times3}&1\end{bmatrix}.}
+ \label{eq:l05-inverse}
+\end{equation}
+This uses the structure of a rigid transformation instead of a general
+$4\times4$ inversion. Multiplying the original and inverse blocks gives
+$R_R^W(R_R^W)\trans=I_3$ and translation
+$-R_R^W(R_R^W)\trans p_R^W+p_R^W=0$, verifying the result.
+
+\subsection{Why reversing the translation requires a rotation}
+The upper-right block of the inverse is
+\begin{equation}
+ \boxed{p_W^R=-(R_R^W)\trans p_R^W.}
+ \label{eq:l05-inverse-position}
+\end{equation}
+Geometrically, the displacement from $O_R$ to $O_W$ is opposite to the
+displacement from $O_W$ to $O_R$. However, $p_R^W$ uses world components,
+whereas $p_W^R$ uses robot components. Negating the former reverses the
+physical displacement but leaves its components expressed in $W$.
+The transpose is needed to express them in $R$.
+
+In the example,
+\[
+ p_W^R=-\begin{bmatrix}c&c&0\\-c&c&0\\0&0&1\end{bmatrix}
+ \begin{bmatrix}1\\0\\2\end{bmatrix}
+ =\begin{bmatrix}-c\\c\\-2\end{bmatrix},
+\]
+which differs from $-p_R^W=[-1\;0\;-2]\trans$. The full reverse transformation is
+\[
+ H_W^R=\begin{bmatrix}c&c&0&-c\\-c&c&0&c\\0&0&1&-2\\0&0&0&1\end{bmatrix}.
+\]
+Applying it to $[1+\sqrt2\;\sqrt2\;3\;1]\trans$ returns
+$[2\;0\;1\;1]\trans$, as required.
+
+\section{What rounding changes}
+Replacing $c=\sqrt2/2$ by $0.7$ makes the forward calculation especially
+simple. Denote the resulting approximate rotation by
+\[
+ \widehat R=\begin{bmatrix}.7&-.7&0\\.7&.7&0\\0&0&1\end{bmatrix}.
+\]
+With the same translation and input point, it gives
+\[
+ \widehat B^W=\widehat R B^R+p_R^W
+ =\begin{bmatrix}2.4\\1.4\\3\end{bmatrix}.
+\]
+If we now use the transpose as though it were the inverse, the return
+calculation produces
+\[
+ \widehat R\trans(\widehat B^W-p_R^W)
+ =\begin{bmatrix}.7&.7&0\\-.7&.7&0\\0&0&1\end{bmatrix}
+ \begin{bmatrix}1.4\\1.4\\1\end{bmatrix}
+ =\begin{bmatrix}1.96\\0\\1\end{bmatrix}.
+\]
+The discrepancy has a precise explanation:
+\begin{equation}
+ \widehat R\trans\widehat R=\operatorname{diag}(.98,.98,1)\ne I_3.
+ \label{eq:l05-roundoff}
+\end{equation}
+After rounding, $\widehat R$ is not an exact rotation matrix, and its transpose
+is not its exact inverse. The return calculation scales the first two input
+components by $0.98$. The exact radical form returns the original point
+without this error.
+
+This deliberately coarse rounding illustrates why orthogonality matters.
+Using the actual algebraic inverse of $\widehat R$ would reverse its own
+forward map exactly in exact arithmetic, but that map would still fail to be
+a rigid rotation. In numerical work, keep adequate precision and monitor the
+rotation constraints rather than assuming that a matrix labeled as a rotation
+automatically satisfies them.
+
+\section{Position, orientation, and pose}
+\emph{Position} specifies the location of a chosen body-fixed origin relative
+to a reference frame. In space it has three degrees of freedom.
+\emph{Orientation} specifies how the body-fixed axes are aligned relative
+to the reference axes and has three more continuous degrees of freedom.
+Together, position and orientation define the body's \emph{pose}.
+An unconstrained rigid body in space therefore has six degrees of freedom.
+
+The number of stored components need not equal the number of degrees of
+freedom. A rotation matrix contains nine entries subject to six independent
+orthonormality constraints, with determinant $+1$ selecting proper rotations.
+A unit quaternion has four components subject to one norm constraint.
+Both describe three continuous degrees of freedom. RPY angles use three
+parameters directly, with the singularity and nonuniqueness discussed in
+Chapter~\ref{chap:lecture04}.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{lll}
+\toprule
+Pose representation & Stored entries & Main condition or limitation\\
+\midrule
+$H_R^W$ & 16 & Rigid-transform block structure\\
+Position and RPY & 6 & Angle ranges and singularities\\
+Position and quaternion & 7 & Unit quaternion; $q$ and $-q$ equivalent\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+For example, two vector representations are
+\[
+ \begin{bmatrix}p_R^W\\\varphi_R^W\\\theta_R^W\\\psi_R^W\end{bmatrix}
+ \in\R^6,\qquad
+ \begin{bmatrix}p_R^W\\q_R^W\end{bmatrix}\in\R^7,
+\]
+where $q_R^W$ represents the same orientation as $R_R^W$ under the
+scalar-first convention. Stacking the components does not make pose
+composition ordinary vector addition. To combine poses, use the appropriate
+rotation and translation rules, conveniently encoded by homogeneous matrices.
+
+Once both the position and orientation of a body-fixed frame are specified,
+the locations of all points fixed to that rigid body follow from their
+constant coordinates in that frame. This is why a single pose describes
+the placement of the entire rigid body.
+
+\clearpage
+\section{Additional exercises}
+Use right-handed frames and exact values unless rounding is explicitly requested.
+\begin{enumerate}
+\item \textbf{A spatial point transformation.}
+Let $R_R^W=R_x(\pi/2)$, $p_R^W=[1\;-2\;3]\trans$, and
+$B^R=[2\;1\;0]\trans$. Find $B^W$ and recover $B^R$ using the reverse map.
+
+\item \textbf{Homogeneous form.}
+Build $H_R^W$ for Exercise 1 and use it to transform $\widetilde B^R$.
+Build $(H_R^W)^{-1}$ using its blocks and verify that their product is $I_4$.
+
+\item \textbf{Reversing a displacement.}
+For $R_R^W=R_z(\pi/2)$ and $p_R^W=[2\;1\;3]\trans$, compute $p_W^R$.
+Compare it with $-p_R^W$ and explain the frame difference. Verify that
+$R_R^W p_W^R+p_R^W=0$.
+
+\item \textbf{A sensor frame.}
+Suppose $R_R^W=R_z(\pi/2)$, $p_R^W=[1\;0\;2]\trans$,
+$R_S^R=I_3$, and $p_S^R=[1\;0\;1]\trans$.
+Find $H_S^W$ and the world coordinates of $B^S=[0\;2\;0]\trans$.
+Check your result by transforming first to $R$ and then to $W$.
+
+\item \textbf{Points and directions.}
+Using the transformation in Exercise 1, transform the points
+$A^R=[0\;0\;0]\trans$ and $B^R=[2\;1\;0]\trans$.
+Show that $B^W-A^W=R_R^W(B^R-A^R)$.
+Explain why a homogeneous direction uses a final zero instead of a one.
+
+\item \textbf{Rounding and orthogonality.}
+Replace $c$ in the worked example by $a=0.707$.
+Derive $\widehat R\trans\widehat R=\operatorname{diag}(2a^2,2a^2,1)$.
+Find the result of the forward map followed by the transpose-based reverse
+map for $B^R=[2\;0\;1]\trans$, and compare with the $a=0.7$ result.
+
+\item \textbf{Components versus degrees of freedom.}
+Explain why position plus a unit quaternion stores seven numbers but describes
+six continuous degrees of freedom. Normalize $q=[2\;0\;0\;2]\trans$.
+Use Appendix~\ref{app:rotation-conversions} to find its rotation matrix,
+then build a homogeneous transformation with position $[1\;0\;2]\trans$.
+\end{enumerate}

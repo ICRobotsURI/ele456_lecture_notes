@@ -1,0 +1,458 @@
+\chapter{Three-dimensional rotations and orientation representations}
+\label{chap:lecture04}
+
+A robot that moves outside a plane requires a spatial description of
+orientation. One angle no longer suffices: a body can turn about three
+independent directions. The construction of a rotation matrix remains the
+same, however. Its columns are the unit axes of one frame expressed in another.
+In three dimensions, these columns have three components, giving a $3\times3$
+matrix.
+
+This chapter constructs rotations about individual axes, combines them into
+a yaw--pitch--roll sequence, recovers those angles from a rotation matrix,
+and introduces unit quaternions as a practical orientation representation.
+All frames used for point-coordinate transformations here share an origin;
+translation is set aside so that the orientation conventions can be developed
+explicitly.
+
+\section{Spatial frames and rotation matrices}
+Let $W$ be a right-handed world frame and $R$ a right-handed robot frame.
+Each has three mutually perpendicular unit axes. Write the robot's axes in
+world components as $[\boldsymbol{x}_R]^W$, $[\boldsymbol{y}_R]^W$, and
+$[\boldsymbol{z}_R]^W$. Then
+\begin{equation}
+ R_R^W=\begin{bmatrix}
+ [\boldsymbol{x}_R]^W &[\boldsymbol{y}_R]^W &[\boldsymbol{z}_R]^W
+ \end{bmatrix}\in\R^{3\times3}.
+ \label{eq:l04-columns}
+\end{equation}
+As in the planar case, the subscript gives the input frame and the superscript
+gives the output frame of the coordinate map. For a point $B$ and common origins,
+\begin{equation}
+ B^W=R_R^W B^R,\qquad
+ B^R=\begin{bmatrix}x_B^R\\y_B^R\\z_B^R\end{bmatrix}.
+\end{equation}
+The same rotation maps the components of a direction vector between frames
+regardless of the locations of their origins.
+
+Positive elementary angles follow the right-hand rule: point the right thumb
+along the positive rotation axis and curl the fingers in the positive direction.
+Viewed from the positive end of that axis toward the origin, the positive
+rotation appears counterclockwise. A perspective drawing may distort lengths
+and visible angles; it does not change this convention.
+
+\section{Elementary rotations}
+An elementary rotation leaves one axis fixed and rotates the perpendicular
+plane. The three basic cases are shown in Figure~\ref{fig:l04-elementary}.
+Each is constructed by expressing the rotated basis vectors in the original
+frame, then placing those vectors in columns.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture04/elementary}
+\caption{Elementary rotations in perspective. Black axes are the world frame;
+red axes are the rotated frame. The rotation axis is shared by the two frames.
+The three panels are separate constructions, each with a positive angle.}
+\label{fig:l04-elementary}
+\end{figure}
+
+\subsection{Rotation about the z axis}
+Let $\psi$ denote a rotation about $z_W$. The $z$ axis remains unchanged, while
+the $x$ and $y$ axes rotate in the $xy$ plane:
+\[
+ [\boldsymbol{x}_R]^W=\begin{bmatrix}\cos\psi\\\sin\psi\\0\end{bmatrix},\quad
+ [\boldsymbol{y}_R]^W=\begin{bmatrix}-\sin\psi\\\cos\psi\\0\end{bmatrix},\quad
+ [\boldsymbol{z}_R]^W=\begin{bmatrix}0\\0\\1\end{bmatrix}.
+\]
+Therefore,
+\begin{equation}
+ \boxed{R_z(\psi)=\begin{bmatrix}
+ \cos\psi&-\sin\psi&0\\\sin\psi&\cos\psi&0\\0&0&1
+ \end{bmatrix}.}
+ \label{eq:l04-rz}
+\end{equation}
+The upper-left block is exactly the planar rotation matrix. The last coordinate
+is unchanged because the rotation takes place in the plane perpendicular to $z$.
+
+\subsection{Rotation about the y axis}
+For a positive angle $\theta$ about $y_W$, the $x$ axis turns toward negative
+$z$ and the $z$ axis turns toward positive $x$. The basis columns are
+\[
+ [\boldsymbol{x}_R]^W=\begin{bmatrix}\cos\theta\\0\\-\sin\theta\end{bmatrix},\quad
+ [\boldsymbol{y}_R]^W=\begin{bmatrix}0\\1\\0\end{bmatrix},\quad
+ [\boldsymbol{z}_R]^W=\begin{bmatrix}\sin\theta\\0\\\cos\theta\end{bmatrix}.
+\]
+Thus
+\begin{equation}
+ \boxed{R_y(\theta)=\begin{bmatrix}
+ \cos\theta&0&\sin\theta\\0&1&0\\-\sin\theta&0&\cos\theta
+ \end{bmatrix}.}
+ \label{eq:l04-ry}
+\end{equation}
+The signs follow from the right-hand rule. The two-dimensional pattern is
+visible in the ordered plane $(z,x)$, where positive rotation carries $z$
+toward $x$; using the order $(x,z)$ without accounting for orientation would
+reverse the signs.
+
+\subsection{Rotation about the x axis}
+For a positive angle $\varphi$ about $x_W$, the $x$ axis is fixed and the
+$y$ axis turns toward positive $z$. Hence
+\[
+ [\boldsymbol{x}_R]^W=\begin{bmatrix}1\\0\\0\end{bmatrix},\quad
+ [\boldsymbol{y}_R]^W=\begin{bmatrix}0\\\cos\varphi\\\sin\varphi\end{bmatrix},\quad
+ [\boldsymbol{z}_R]^W=\begin{bmatrix}0\\-\sin\varphi\\\cos\varphi\end{bmatrix},
+\]
+and
+\begin{equation}
+ \boxed{R_x(\varphi)=\begin{bmatrix}
+ 1&0&0\\0&\cos\varphi&-\sin\varphi\\0&\sin\varphi&\cos\varphi
+ \end{bmatrix}.}
+ \label{eq:l04-rx}
+\end{equation}
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture04/planes}
+\caption{Plane views of the elementary rotations. From left to right, the
+ordered planes are $(x_W,y_W)$, $(z_W,x_W)$, and $(y_W,z_W)$. Each red
+vector has unit length; its projections explain the sine and cosine entries.}
+\label{fig:l04-planes}
+\end{figure}
+
+A quick sign check is to use a quarter-turn: $R_z(\pi/2)$ maps the first
+basis vector to the second, $R_y(\pi/2)$ maps the third to the first, and
+$R_x(\pi/2)$ maps the second to the third. At zero angle, all three matrices
+reduce to $I_3$.
+
+\section{What makes a matrix a valid spatial rotation?}
+Write $R=[u\;v\;w]$. Its columns must be unit vectors and mutually
+perpendicular:
+\begin{equation}
+ u\trans u=v\trans v=w\trans w=1,\qquad
+ u\trans v=u\trans w=v\trans w=0.
+ \label{eq:l04-constraints}
+\end{equation}
+Together these six scalar constraints give $R\trans R=I_3$. They constrain
+the nine matrix entries to three continuous degrees of freedom. To describe
+a rotation between right-handed frames, rather than a reflection, one also
+requires $\det R=+1$. The determinant condition selects the proper-rotation
+component; it does not remove another continuous degree of freedom.
+
+For a valid rotation,
+\begin{equation}
+ R^{-1}=R\trans,\qquad R_F^A=(R_A^F)\trans.
+\end{equation}
+Composition still follows the frame chain, $R_C^A=R_B^A R_C^B$, and lengths
+are preserved. These are the same structural properties used in two dimensions.
+
+\subsection{An illustrative set of components}
+To illustrate how columns are assembled, consider the rough component array
+\begin{equation}
+ M=\begin{bmatrix}.8&-.3&.4\\.2&.7&.15\\-.1&.2&.7\end{bmatrix}.
+ \label{eq:l04-rough}
+\end{equation}
+Its first column describes a direction with a large positive $x$ component,
+a smaller positive $y$ component, and a negative $z$ component. The other
+columns can be read in the same way. However, these illustrative numbers do
+\emph{not} define a rotation matrix. For example,
+\[
+ u\trans u=.8^2+.2^2+(-.1)^2=.69\ne1,\qquad
+ u\trans v=.8(-.3)+.2(.7)+(-.1)(.2)=-.12\ne0.
+\]
+Even normalizing each column separately would not make the columns mutually
+perpendicular. A valid frame must satisfy all the orthonormality conditions
+and the right-handedness condition, not just have plausible-looking components.
+
+\section{Roll, pitch, and yaw as a sequence of rotations}
+A general spatial orientation can be represented by a sequence of three
+elementary rotations. Many sequences are possible, and the convention must
+be specified before interpreting three angle values. Here the convention is
+the \emph{intrinsic Z--Y--X sequence}: each successive rotation is about an
+axis of the frame obtained after the previous rotation.
+
+Starting from frame $W$, define intermediate frames 1 and 2 and final frame 3:
+\begin{enumerate}
+ \item Rotate by yaw $\psi$ about $z_W$ to obtain frame 1.
+ \item Rotate by pitch $\theta$ about the new axis $y_1$ to obtain frame 2.
+ \item Rotate by roll $\varphi$ about the new axis $x_2$ to obtain frame 3.
+\end{enumerate}
+Although the angles are often listed as roll, pitch, yaw, the construction
+above proceeds through yaw, pitch, then roll.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture04/sequence}
+\caption{The intrinsic Z--Y--X construction. The axis used at each stage stays
+fixed during that stage. Arrows show the sequence of frame construction;
+coordinate maps from frame 3 back to $W$ act in the reverse traversal.}
+\label{fig:l04-sequence}
+\end{figure}
+
+The elementary frame relationships are
+\[
+ R_1^W=R_z(\psi),\qquad R_2^1=R_y(\theta),\qquad R_3^2=R_x(\varphi).
+\]
+Applying the frame-chain rule gives
+\begin{equation}
+ \boxed{R_3^W=R_1^W R_2^1 R_3^2
+ =R_z(\psi)R_y(\theta)R_x(\varphi).}
+ \label{eq:l04-rpy}
+\end{equation}
+This product maps coordinates from frame 3 to $W$. When it multiplies $B^3$,
+the rightmost factor acts first: $B^3\to B^2\to B^1\to B^W$. This algebraic
+order is consistent with constructing the frames successively about their
+moving axes; it should not be confused with three rotations about fixed world
+axes in the same chronological order.
+
+\subsection{Order matters in three dimensions}
+Unlike planar rotations, rotations about different spatial axes do not
+generally commute. With $e_x=[1\;0\;0]\trans$,
+\[
+ R_z(\pi/2)R_x(\pi/2)e_x=e_y,\qquad
+ R_x(\pi/2)R_z(\pi/2)e_x=e_z.
+\]
+The first product leaves $e_x$ unchanged in its first step, then turns it
+toward $e_y$. The second turns it toward $e_y$ first, then toward $e_z$.
+Thus changing the factor order generally changes the orientation.
+
+\subsection{Expanded form}
+For compactness, write $c_a=\cos a$ and $s_a=\sin a$. Multiplying the three
+elementary matrices yields
+\begin{equation}
+ R=\begin{bmatrix}
+ c_\psi c_\theta & c_\psi s_\theta s_\varphi-s_\psi c_\varphi & c_\psi s_\theta c_\varphi+s_\psi s_\varphi\\
+ s_\psi c_\theta & s_\psi s_\theta s_\varphi+c_\psi c_\varphi & s_\psi s_\theta c_\varphi-c_\psi s_\varphi\\
+ -s_\theta & c_\theta s_\varphi & c_\theta c_\varphi
+ \end{bmatrix}.
+ \label{eq:l04-expanded}
+\end{equation}
+The factored form is often easier to evaluate and check. The expanded form is
+particularly useful for identifying which entries contain the information
+needed to recover the angles.
+
+\section{Worked example}
+Let the roll, pitch, and yaw angles be
+\[
+ \varphi=\frac{\pi}{4},\qquad \theta=\frac{\pi}{3},\qquad \psi=\frac{\pi}{2}.
+\]
+Then
+\begin{align}
+ R_3^W
+ &=\begin{bmatrix}0&-1&0\\1&0&0\\0&0&1\end{bmatrix}
+ \begin{bmatrix}1/2&0&\sqrt3/2\\0&1&0\\-\sqrt3/2&0&1/2\end{bmatrix}
+ \begin{bmatrix}1&0&0\\0&\sqrt2/2&-\sqrt2/2\\0&\sqrt2/2&\sqrt2/2\end{bmatrix}\\
+ &=\begin{bmatrix}
+ 0&-\sqrt2/2&\sqrt2/2\\
+ 1/2&\sqrt6/4&\sqrt6/4\\
+ -\sqrt3/2&\sqrt2/4&\sqrt2/4
+ \end{bmatrix}.
+ \label{eq:l04-example}
+\end{align}
+For instance, the first column has squared length $1/4+3/4=1$ and has zero
+dot product with the second column. More generally, the product of these
+three proper rotation matrices is itself a proper rotation matrix.
+
+If $B^3=[1\;0\;0]\trans$, its world coordinates are the first column of
+$R_3^W$. To return to frame 3, use $(R_3^W)\trans$. Thus the orientation
+representation serves directly as a coordinate transformation.
+
+\section{Recovering roll, pitch, and yaw}
+Let a valid rotation matrix be written as
+\[
+ R=\begin{bmatrix}r_{11}&r_{12}&r_{13}\\r_{21}&r_{22}&r_{23}\\r_{31}&r_{32}&r_{33}\end{bmatrix}.
+\]
+For the convention in Equation~\eqref{eq:l04-rpy}, choose the principal pitch
+range $-\pi/2<\theta<\pi/2$. In this nonsingular range,
+\begin{equation}
+ \boxed{\begin{aligned}
+ \varphi&=\operatorname{atan2}(r_{32},r_{33}),\\
+ \theta&=\operatorname{atan2}\!\left(-r_{31},\sqrt{r_{32}^2+r_{33}^2}\right),\\
+ \psi&=\operatorname{atan2}(r_{21},r_{11}).
+ \end{aligned}}
+ \label{eq:l04-extraction}
+\end{equation}
+The entries in Equation~\eqref{eq:l04-expanded} explain these formulas:
+\[
+ (r_{32},r_{33})=c_\theta(s_\varphi,c_\varphi),\qquad
+ (r_{21},r_{11})=c_\theta(s_\psi,c_\psi).
+\]
+Since $c_\theta>0$ on the chosen range, each pair has the same direction as
+the corresponding sine--cosine pair. Also,
+\[
+ -r_{31}=s_\theta,\qquad
+ \sqrt{r_{32}^2+r_{33}^2}=|c_\theta|=c_\theta.
+\]
+Applied to Equation~\eqref{eq:l04-example}, the formulas give
+\[
+ \varphi=\operatorname{atan2}(\sqrt2/4,\sqrt2/4)=\pi/4,
+ \quad \theta=\operatorname{atan2}(\sqrt3/2,1/2)=\pi/3,
+\]
+and $\psi=\operatorname{atan2}(1/2,0)=\pi/2$, recovering the original angles.
+
+\subsection{Why atan2 takes two arguments}
+The function $\operatorname{atan2}(y,x)$ returns the angle of the pair $(x,y)$,
+using both signs to identify the quadrant. The argument order here is
+\emph{vertical component first, horizontal component second}. The numeral 2
+is part of the function's name, not a multiplication or exponent.
+
+The ratio $y/x$ alone loses information: $(1,1)$ and $(-1,-1)$ both have ratio
+one, but point in opposite directions. Ordinary $\arctan(y/x)$ returns the
+same principal angle for both, whereas
+\[
+ \operatorname{atan2}(1,1)=\pi/4,\qquad
+ \operatorname{atan2}(-1,-1)=-3\pi/4.
+\]
+Unlike division followed by arctangent, $\operatorname{atan2}$ also handles
+$x=0$ with $y\ne0$, giving $\pi/2$ or $-\pi/2$.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture04/atan2}
+\caption{Equal ratios do not imply equal directions. The signs of both
+components distinguish the first and third quadrants. The circle indicates
+direction only; the two labeled vectors need not have unit length.}
+\label{fig:l04-atan2}
+\end{figure}
+
+Tangent has period $\pi$, while a full revolution has length $2\pi$.
+The principal arctangent takes values in $(-\pi/2,\pi/2)$; a conventional
+principal range for $\operatorname{atan2}$ spans $2\pi$, such as $(-\pi,\pi]$.
+At the negative horizontal axis, $\pi$ and $-\pi$ represent the same direction;
+endpoint handling can vary between implementations. At $(x,y)=(0,0)$ there is
+no geometric direction, whatever numerical value a software routine returns.
+
+\subsection{Singular orientations and angle ranges}
+The three-angle representation covers all orientations, but is not globally
+unique or nonsingular. At $\theta=\pm\pi/2$, the pairs used to extract yaw
+and roll both vanish:
+\[
+ r_{32}=r_{33}=r_{21}=r_{11}=0.
+\]
+Consequently, Equation~\eqref{eq:l04-extraction} cannot determine yaw and roll
+separately. At $\theta=\pi/2$, for example, the matrix depends on their
+difference $\varphi-\psi$. This is the Euler-angle singularity often called
+\emph{gimbal lock}. It is a limitation of the angle coordinates, not a loss
+of information in the rotation matrix.
+
+An implementation must choose a convention for the singular case rather than
+treat $\operatorname{atan2}(0,0)$ as a uniquely meaningful angle. Near this
+case, small matrix perturbations can produce large changes in extracted yaw
+and roll. Away from it, the principal ranges are typically roll and yaw in
+a $2\pi$ interval, and pitch in $[-\pi/2,\pi/2]$.
+
+\section{Choosing and maintaining an orientation representation}
+Angles make individual turns easy to describe, while matrices make coordinate
+transformation and composition direct. The map $B^W=R_R^W B^R$ is linear in
+the coordinates of $B$ for a fixed rotation; the dependence of $R_R^W$ on the
+angles remains trigonometric.
+
+Finite-precision arithmetic can cause repeatedly multiplied rotation matrices
+to drift from orthogonality. Useful checks are whether $R\trans R$ remains
+close to $I_3$ and whether $\det R$ remains close to $+1$. Restoring unit
+column lengths alone is insufficient: perpendicularity and handedness must
+also be retained. A correction procedure must restore a proper orthonormal frame.
+
+Angle representations have their own difficulties, including wrapping at the
+ends of the chosen intervals and singular orientations. Unit quaternions
+provide another representation used in robotics software. No representation
+removes the need to specify conventions and manage numerical error.
+
+\subsection{Unit quaternions in practice}
+A unit quaternion represents orientation using four real components. With
+the scalar component first, write
+\begin{equation}
+ q=\begin{bmatrix}q_w&q_x&q_y&q_z\end{bmatrix}\trans,
+ \qquad q\trans q=q_w^2+q_x^2+q_y^2+q_z^2=1.
+ \label{eq:l04-quaternion}
+\end{equation}
+Four components with one unit-norm constraint leave three continuous degrees
+of freedom, just as for a rotation matrix. The quaternions $q$ and $-q$
+represent the same orientation; this discrete ambiguity does not add a degree
+of freedom. Component order must always be checked when exchanging data:
+some software places the scalar component last.
+
+For a nonzero quaternion affected by small numerical drift, restoring unit
+norm is straightforward:
+\[
+ q\leftarrow\frac{q}{\|q\|},\qquad
+ \|q\|=\sqrt{q_w^2+q_x^2+q_y^2+q_z^2}.
+\]
+A zero quaternion cannot be normalized and does not represent an orientation.
+Normalization enforces the representation's constraint; it does not undo
+every numerical error in the represented orientation.
+
+The four components are less immediately intuitive than roll, pitch, and yaw,
+but are convenient for storing and exchanging orientations. A useful workflow
+is to retain a unit quaternion in software, convert to a rotation matrix for
+coordinate calculations, and extract angles when interpreting the result.
+To compose two orientations using familiar matrix algebra, convert both to
+matrices, multiply in the appropriate frame order, and convert back if needed.
+Direct quaternion composition is also possible and efficient; its algebra is
+outside the scope of this introduction.
+
+Appendix~\ref{app:rotation-conversions} gives all six conversion directions
+between matrices, RPY angles, and scalar-first unit quaternions, including
+their validity conditions. For example, a quaternion can be converted to
+RPY angles to inspect yaw, while remembering that the chosen angle
+representation still has its pitch singularities.
+
+\section{Key identities}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{ll}
+\toprule
+Property or operation & Rule \\
+\midrule
+Proper rotation & $R\trans R=I_3$, $\det R=1$ \\
+Coordinate transformation, common origin & $B^W=R_R^W B^R$ \\
+Reverse transformation & $R_W^R=(R_R^W)\trans$ \\
+Frame composition & $R_C^A=R_B^A R_C^B$ \\
+Intrinsic Z--Y--X convention & $R=R_z(\psi)R_y(\theta)R_x(\varphi)$ \\
+Nonsingular principal pitch range & $-\pi/2<\theta<\pi/2$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\clearpage
+\section{Additional exercises}
+Use right-handed frames, column vectors, and the intrinsic Z--Y--X convention.
+Show your calculations and keep exact trigonometric values where possible.
+\begin{enumerate}
+\item \textbf{Elementary rotations.}
+Write $R_z(\pi/2)$, $R_y(\pi/2)$, and $R_x(\pi/2)$. For each matrix,
+identify its unchanged axis and determine the images of all three standard
+basis vectors. Check the signs using the right-hand rule.
+
+\item \textbf{Checking a candidate matrix.}
+For the matrix $M$ in Equation~\eqref{eq:l04-rough}, compute the squared
+lengths of its three columns and all three pairwise dot products. Explain why
+normalizing the columns individually cannot produce a valid rotation matrix.
+
+\item \textbf{A valid spatial orientation.}
+Consider
+\[
+ R=\begin{bmatrix}0&-1&0\\1&0&0\\0&0&1\end{bmatrix},\qquad
+ B^R=\begin{bmatrix}1\\2\\3\end{bmatrix}.
+\]
+Compute $B^W=RB^R$, recover $B^R$ using the transpose, and verify length
+preservation. State which elementary rotation $R$ represents.
+
+\item \textbf{Noncommutativity.}
+Compute $R_x(\pi/2)R_y(\pi/2)$ and $R_y(\pi/2)R_x(\pi/2)$.
+Apply both to $e_z=[0\;0\;1]\trans$. Explain why the two results differ.
+
+\item \textbf{From angles to a matrix and back.}
+Take $\varphi=\pi/4$, $\theta=0$, and $\psi=\pi/2$.
+Compute $R=R_z(\psi)R_y(\theta)R_x(\varphi)$, then recover all three angles
+with Equation~\eqref{eq:l04-extraction}. Identify the frame axis used at each
+stage of the intrinsic construction.
+
+\item \textbf{Quadrants and atan2.}
+Evaluate $\operatorname{atan2}(1,-1)$,
+$\operatorname{atan2}(-1,-1)$, and $\operatorname{atan2}(-1,0)$.
+Sketch the corresponding directions. Explain what goes wrong if each result
+is computed using only $\arctan(y/x)$.
+
+\item \textbf{A singular orientation.}
+Set $\theta=\pi/2$ in Equation~\eqref{eq:l04-expanded}. Show that the
+result depends on $\varphi-\psi$. Verify that the triples
+$(\varphi,\theta,\psi)=(0,\pi/2,0)$ and $(\pi/4,\pi/2,\pi/4)$ give
+the same matrix. Why can the extraction formulas not recover the two triples
+as distinct orientations?
+\end{enumerate}
