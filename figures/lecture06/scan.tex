@@ -1,0 +1,20 @@
+\begin{tikzpicture}[scale=.9]
+\fill[gray!15] (0,0)--(120:3.6) arc(120:240:3.6)--cycle;
+\node[align=center] at (-2.5,0) {Blind\\sector};
+\draw[dashed] (-120:3.6) arc(-120:120:3.6);
+\node[above] at (65:3.6) {$r_{\max}$};
+\draw[axis] (0,0)--(4.4,0) node[right] {$x_S$};
+\draw[axis] (0,0)--(0,4) node[above] {$y_S$};
+\draw[very thick] (2,-1.4)--(2,1.4);
+\node[right] at (2,1.4) {obstacle};
+\foreach \a in {-30,-15,0,15,30} {
+\draw[sensorframe] (0,0)--(2,{2*tan(\a)});
+\fill[sensorframe] (2,{2*tan(\a)}) circle(2pt);
+}
+\foreach \a in {-120,-90,-60,60,90,120} \draw[dashed,sensorframe] (0,0)--(\a:3.6);
+\draw[->,thick] (-120:1.1) arc(-120:120:1.1);
+\node[right] at (1.15,.4) {$\alpha$};
+\node[below] at (-120:3.6) {$\gamma_{\min}$};
+\node[above left] at (120:3.6) {$\gamma_{\max}$};
+\fill (0,0) circle(2pt);
+\end{tikzpicture}

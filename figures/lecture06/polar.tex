@@ -1,0 +1,9 @@
+\begin{tikzpicture}
+\draw[axis] (0,0)--(5,0) node[right] {$x_S$};
+\draw[axis] (0,0)--(0,3.3) node[above] {$y_S$};
+\draw[axis,sensorframe] (0,0)--(3.6,2.4) node[midway,above left] {$r_i$};
+\draw[projection] (3.6,2.4)--(3.6,0) node[below] {$r_i\cos\gamma_i$};
+\draw[projection] (3.6,2.4)--(0,2.4) node[left] {$r_i\sin\gamma_i$};
+\draw[->] (.9,0) arc(0:33.69:.9) node[right] {$\gamma_i$};
+\fill (3.6,2.4) circle(2pt) node[above right] {$B_i$};
+\end{tikzpicture}

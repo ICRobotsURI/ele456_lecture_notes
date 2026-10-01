@@ -1,4 +1,4 @@
-% Opening from lecture 05; extend with subsequent lectures on sensing.
+% Robot-system introduction from lecture 05; sensing from lecture 06.
 \chapter{Robot systems and sensing}
 \label{chap:lecture06}
 
@@ -96,3 +96,353 @@ After the robot approaches, the object's coordinates relative to the robot
 have changed. New measurements can update its estimated location before the
 grasp. This illustrates why sensing and action are connected repeatedly:
 the robot does not merely observe once and then execute an unrelated motion.
+
+\section{Proprioceptive and exteroceptive sensing}
+Sensors can be classified by the quantities they measure.
+\emph{Proprioceptive} sensors provide information about the robot itself,
+such as wheel rotation or joint position. A vehicle's speed indication is
+an example of information about its own motion. \emph{Exteroceptive} sensors
+provide information about the environment or the robot's relationship to it,
+such as the distance to an obstacle. A parking-distance sensor illustrates
+this second category. The distinction concerns the measured quantity, not
+whether the sensor is physically mounted inside or outside the robot.
+
+The following sections develop general measurement concepts and then focus
+on exteroceptive distance sensing. These measurements help a mobile robot
+detect obstacles and express their locations in the reference frames used
+for planning and control.
+
+\section{From a physical quantity to a measurement}
+A sensor system converts a physical quantity into information available to
+software. For a force measurement, a typical chain is
+\[
+ F\longrightarrow\text{electrical signal}\longrightarrow
+ \text{ADC code}\longrightarrow\bar F.
+\]
+Here $F$ is the actual force and $\bar F$ is the reported force in physical
+units. The analog-to-digital converter (ADC) produces a number representing
+an input voltage; calibration relates that number to the force.
+
+Different transducers use different physical effects. A conventional
+resistive strain gauge changes resistance when deformed; a capacitive
+transducer instead uses a change in capacitance. Signal conditioning turns
+the relevant electrical change into a suitable input for measurement.
+Both mechanisms can support force measurement, but use different electrical
+effects.\footnote{See
+\href{https://www.ni.com/en/shop/data-acquisition/sensor-fundamentals/measuring-strain-with-strain-gages.html}{NI, Measuring Strain with Strain Gages}.}
+
+\subsection{Quantization and conversion to physical units}
+An 8-bit ADC has $2^8=256$ possible codes, numbered 0 through 255.
+For an ideal uniform converter spanning 0 to $5\,\mathrm V$, the nominal
+voltage step is
+\[
+ \Delta V=\frac{5}{256}\,\mathrm V\approx19.5\,\mathrm{mV}.
+\]
+With the illustrative rule $k=\lfloor V/\Delta V\rfloor$ for
+$0\le V<5\,\mathrm V$, an input of $2.31\,\mathrm V$ gives code 118.
+The exact transition convention depends on the converter, but the principle
+is unchanged: a finite interval of input voltages maps to one code.
+The code is not itself a force in newtons. Software must apply the calibrated
+relationship between the transducer output and the physical quantity.
+
+Quantization, electrical disturbances, and variation in the physical
+measurement process can all contribute to the difference between $F$ and
+$\bar F$. Increasing the number of digital bits alone does not eliminate
+all of these errors.
+
+\section{Bias, noise, and calibration}
+Within a useful operating interval, a simple measurement model is
+\begin{equation}
+ \bar F_k=F_k+b+\nu_k,
+ \label{eq:l06-noise}
+\end{equation}
+where $b$ is a constant bias and $\nu_k$ is the noise in sample $k$.
+This model assumes the scale factor has already been set correctly.
+The ideal measurement has $b=0$ and $\nu_k=0$. A bias of $0.5\,\mathrm N$
+shifts every measurement upward by $0.5\,\mathrm N$; noise causes readings
+to vary even when the applied force is held fixed.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture06/errors}
+\caption{A constant bias shifts the ideal input--output relationship.
+After bias correction, individual samples can still fluctuate about the
+true value. The time trace is schematic, not experimental data.}
+\label{fig:l06-errors}
+\end{figure}
+
+\subsection{Estimating a constant offset}
+Calibration compares measurements with known reference inputs. Suppose a
+constant reference force $F_0$ is applied and $M$ samples are collected.
+Under the constant-bias model with zero-mean noise, an estimate is
+\begin{equation}
+ \widehat b=\frac1M\sum_{k=1}^M\bar F_k-F_0,
+ \qquad F_{\mathrm{corr}}=\bar F-\widehat b.
+ \label{eq:l06-calibration}
+\end{equation}
+For this model, averaging is also the least-squares estimate of the constant
+offset. It is not a universal calibration procedure for every sensor.
+
+For $F_0=5\,\mathrm N$ and readings $4.93$, $4.95$, and
+$4.91\,\mathrm N$, the mean is $4.93\,\mathrm N$, so
+\[
+ \widehat b=-0.07\,\mathrm N.
+\]
+Subtracting this bias means adding $0.07\,\mathrm N$ to a measurement.
+The corrected samples are $5.00$, $5.02$, and $4.98\,\mathrm N$:
+their mean agrees with the reference, but the individual values still vary.
+One sample alone cannot distinguish its random error from a constant offset.
+
+For independent noise samples with equal variance $\sigma^2$, the variance
+of their mean is $\sigma^2/M$. Thus averaging reduces uncertainty in the
+offset estimate under those assumptions. Correlation or drift can make
+averaging less effective, and calibration does not remove future noise.
+
+\subsection{Limits of a simple calibration model}
+If the response also has an unknown gain, a model such as
+$\bar F=aF+b+\nu$ requires reference measurements at more than one force.
+A nonlinear response may require fitting a curve over the intended operating
+range. A sufficiently smooth response can often be approximated locally by
+a line, but that does not justify extrapolating the line indefinitely.
+
+Sensors have physical operating limits. A compression-only sensing assembly
+need not measure tensile loading, while other force sensors can measure both
+directions. At large inputs, a device may saturate or be damaged. Calibration
+must therefore specify its applicable range and conditions; it cannot make
+an unsupported input measurable.
+
+\section{Distance sensing with ultrasound}
+A mobile robot needs information about obstacles early enough to respond.
+An ultrasonic range sensor emits a sound pulse and detects a returning echo.
+If $v_s$ is the sound speed in the medium and $\Delta t$ is the round-trip
+travel time, then
+\begin{equation}
+ \boxed{d=\frac{v_s\Delta t}{2}.}
+ \label{eq:l06-sonar}
+\end{equation}
+The factor two accounts for travel to the obstacle and back. This approximation
+treats the emitter and receiver as colocated relative to the target distance
+and assumes the detected echo follows the intended path.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture06/sonar}
+\caption{Ultrasonic ranging measures the outgoing and return travel time.
+Emitter--receiver separation is exaggerated for clarity.}
+\label{fig:l06-sonar}
+\end{figure}
+
+For example, using $v_s=343\,\mathrm{m/s}$ and a measured delay of
+$10\,\mathrm{ms}$ gives $d=1.715\,\mathrm m$. The sound speed must match
+the medium and conditions; the same assumed value cannot be used for both
+air and water.
+
+\subsection{Weak echoes, multipath, and interference}
+The acoustic wave spreads as it propagates, and only part of the reflected
+energy returns to the receiver. Absorption and target geometry further affect
+the echo. A weak or missing return can therefore limit useful range; it does
+not necessarily establish that no obstacle exists.
+
+An echo may also follow a longer path involving several reflecting surfaces.
+This \emph{multipath} return corresponds to total path length, not necessarily
+twice the direct distance to the intended obstacle. With several ultrasonic
+sensors nearby, one receiver may detect another transmitter's pulse,
+creating \emph{crosstalk}.
+
+One mitigation is to trigger sensors in sequence and allow earlier echoes
+to decay. The waiting interval depends on the sensor and environment; there
+is no universal delay of several seconds. For a maximum intended range
+$d_{\max}$, $2d_{\max}/v_s$ is the direct round-trip travel time, to which
+practical timing allowances may need to be added. Sequential operation also
+means that a set of readings is collected over time rather than instantaneously.
+
+\section{Infrared reflection and laser ranging}
+An infrared emitter and receiver can detect reflected light from an object.
+In a simple intensity-based sensor, received signal strength is related to
+distance through calibration. The difficulty is that signal strength also
+depends on the target's reflectance, orientation, and other conditions.
+A less reflective target may therefore be interpreted as farther away if
+the calibration assumes a more reflective target.
+
+Visible color alone does not determine reflectance at an infrared wavelength.
+The relevant property is the material's response to the emitted light.
+At approximately fixed height, an array of downward-facing reflectance
+sensors can use differences between a line and its background for line
+following. In that application, contrast is the desired information rather
+than an unwanted influence on a distance estimate.
+
+Infrared describes a wavelength band, not a unique ranging method.
+Optical time-of-flight ranging is also possible with suitable electronics;
+it is not ruled out by the high speed of light.\footnote{For an example of
+infrared time-of-flight technology, see
+\href{https://www.st.com/en/applications/sensing/proximity-ranging-sensing.html}{STMicroelectronics, Proximity Sensing Applications}.}
+Laser rangefinders can use pulse travel time, phase-based techniques, or
+other ranging principles. A laser beam is narrow but still has finite
+divergence, and a useful return depends on the target and receiver.
+
+\subsection{Why scan the beam?}
+A single narrow beam measures along one direction. An obstacle outside that
+direction can remain undetected even when the reported distance is correct.
+A planar laser scanner samples multiple directions, often by rotating a
+beam or optical assembly. It associates each measured range with a bearing,
+producing a scan of the surrounding geometry in a plane.
+
+Coverage is limited by the field of view, angular sampling, minimum and
+maximum usable range, and whether the obstacle intersects the scan plane.
+Scanning also takes time. A robot or object that moves during acquisition
+may change position between the first and last readings.
+
+\section{Representing a planar laser scan}
+Let $S$ be the sensor frame, with bearings measured counterclockwise from
+$x_S$ toward $y_S$. A scan contains ranges
+\[
+ \boldsymbol r=\begin{bmatrix}r_1&r_2&\cdots&r_N\end{bmatrix}\trans,
+\]
+together with the information needed to determine each ray's angle and
+interpret its validity. Suppose $N\ge2$ uniformly spaced rays include both
+endpoints $\gamma_{\min}$ and $\gamma_{\max}$. Define the field of view
+$\alpha$ and angular spacing $\beta$ by
+\begin{equation}
+ \alpha=\gamma_{\max}-\gamma_{\min},\qquad
+ \boxed{\beta=\frac{\alpha}{N-1}},\qquad
+ \boxed{\gamma_i=\gamma_{\min}+(i-1)\beta}.
+ \label{eq:l06-angles}
+\end{equation}
+There are $N-1$ intervals between $N$ endpoint-inclusive samples. In
+particular, $\gamma_1=\gamma_{\min}$ and $\gamma_N=\gamma_{\max}$.
+A full-circle scan that omits a duplicate endpoint uses a different counting
+convention; always follow the device's actual angular metadata.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture06/scan}
+\caption{A schematic $240^\circ$ field of view. Solid rays end at detected
+obstacle points; dashed rays illustrate directions without a depicted return
+within range. The shaded rear sector is not observed. Only selected rays
+are drawn.}
+\label{fig:l06-scan}
+\end{figure}
+
+\subsection{Worked example: 241 rays}
+For $\gamma_{\min}=-2\pi/3$, $\gamma_{\max}=2\pi/3$, and $N=241$,
+\[
+ \alpha=\frac{4\pi}{3}=240^\circ,\qquad
+ \beta=\frac{4\pi/3}{240}=\frac{\pi}{180}=1^\circ.
+\]
+Thus $\gamma_i=-120^\circ+(i-1)1^\circ$. Ray 1 points at
+$-120^\circ$, ray 121 at $0^\circ$, and ray 241 at $120^\circ$.
+The indices here start at one; an array indexed from zero instead uses
+$\gamma_j=\gamma_{\min}+j\beta$ for $j=0,\ldots,N-1$.
+
+Angular spacing is distinct from range resolution or measurement accuracy.
+At range $r$, two directions separated by $\beta$ intersect a circle at points
+separated by chord length $2r\sin(\beta/2)$. For small angles this is
+approximately $r\beta$, with $\beta$ in radians. Consequently, the gaps between
+sampled directions become wider with distance, and a thin obstacle can fall
+between adjacent rays.
+
+\subsection{Valid returns and missing measurements}
+A range reading must be interpreted using the device's valid range and
+status conventions before being converted into an obstacle point. Invalid
+or missing returns may use special codes, infinity, or other representations.
+Do not assume that zero or the maximum-range value always has one universal
+meaning. In particular, a missing return is not an obstacle located at the
+maximum range, nor proof that the whole direction is unobstructed.
+
+As a concrete software convention, the ROS \texttt{LaserScan} message carries
+angle and range metadata and specifies that ranges below its minimum or above
+its maximum should be discarded.\footnote{See the official
+\href{https://github.com/ros2/common_interfaces/blob/rolling/sensor_msgs/msg/LaserScan.msg}{ROS LaserScan message definition}.}
+The sensor and driver documentation determine the remaining status details.
+
+\section{From ranges to obstacle coordinates}
+For a valid return at range $r_i$ and bearing $\gamma_i$, the corresponding
+point in the sensor frame is
+\begin{equation}
+ \boxed{B_i^S=\begin{bmatrix}x_i^S\\y_i^S\end{bmatrix}
+ =\begin{bmatrix}r_i\cos\gamma_i\\r_i\sin\gamma_i\end{bmatrix}.}
+ \label{eq:l06-polar}
+\end{equation}
+This is the polar-to-Cartesian conversion. The inverse is
+\begin{equation}
+ r_i=\sqrt{(x_i^S)^2+(y_i^S)^2},\qquad
+ \gamma_i=\operatorname{atan2}(y_i^S,x_i^S).
+ \label{eq:l06-cartesian}
+\end{equation}
+At the origin, the range is zero and the bearing is geometrically undefined.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture06/polar}
+\caption{A valid range and bearing determine Cartesian coordinates in the
+sensor frame. The projections give the cosine and sine components.}
+\label{fig:l06-polar}
+\end{figure}
+
+\subsection{The sensor frame is not necessarily the robot frame}
+A sensor rigidly attached to a robot has a fixed mounting transform, but
+its axes and origin need not coincide with the robot's. In the planar case,
+\begin{equation}
+ B_i^R=R_S^R B_i^S+p_S^R,\qquad
+ \widetilde B_i^W=H_R^W H_S^R\widetilde B_i^S.
+ \label{eq:l06-frames}
+\end{equation}
+For a spatial mounting, embed the scan point as
+$[r_i\cos\gamma_i\;r_i\sin\gamma_i\;0]\trans$ in $S$ and apply the
+$4\times4$ transformations of Chapter~\ref{chap:lecture05}. A horizontal
+scan in the sensor frame need not be horizontal in the world frame.
+
+For example, ray 151 in the 241-ray scan has bearing $30^\circ$.
+If $r_{151}=2\,\mathrm m$, then
+\[
+ B_{151}^S=\begin{bmatrix}\sqrt3\\1\end{bmatrix}\,\mathrm m.
+\]
+Suppose the sensor is rotated by $90^\circ$ relative to the robot and its
+origin is at $p_S^R=[0.2\;0]\trans\,\mathrm m$. Then
+\[
+ B_{151}^R=\begin{bmatrix}0&-1\\1&0\end{bmatrix}
+ \begin{bmatrix}\sqrt3\\1\end{bmatrix}
+ +\begin{bmatrix}.2\\0\end{bmatrix}
+ =\begin{bmatrix}-.8\\\sqrt3\end{bmatrix}\,\mathrm m.
+\]
+Treating the original sensor coordinates as robot coordinates would give
+the wrong location even though the range measurement itself was correct.
+Finally, all these conversions act on measured data: calibration error and
+noise remain present in the resulting obstacle coordinates.
+
+\clearpage
+\section{Additional exercises}
+State assumptions and units. Use the endpoint-inclusive scan convention unless
+otherwise specified.
+\begin{enumerate}
+\item \textbf{Classifying measurements.} Classify a wheel-rotation measurement,
+a joint-angle measurement, and a distance to a wall as proprioceptive or
+exteroceptive. Explain why the sensor's mounting location does not decide
+the classification.
+
+\item \textbf{ADC conversion.} Use the ideal 8-bit, 0--$5\,\mathrm V$ model
+in this chapter. Find the code for $2.50\,\mathrm V$ and the voltage interval
+represented by code 118. Why is neither number automatically a force?
+
+\item \textbf{Offset calibration.} A $10\,\mathrm N$ reference gives readings
+$9.8$, $9.9$, $9.7$, and $9.8\,\mathrm N$. Estimate the constant bias and
+correct a later reading of $12.3\,\mathrm N$. State the assumptions under
+which averaging is appropriate and explain why corrected readings still vary.
+
+\item \textbf{Ultrasonic ranging.} With $v_s=343\,\mathrm{m/s}$, find the
+range corresponding to a $12\,\mathrm{ms}$ echo delay. Find the direct
+round-trip time for a $4\,\mathrm m$ maximum range. Explain how multipath
+and a neighboring transmitter can each invalidate a naive distance estimate.
+
+\item \textbf{Scan indexing.} A scanner samples $[-120^\circ,120^\circ]$
+with 241 rays. Find the bearings of rays 1, 61, 121, and 241. Which ray
+points at $45^\circ$? Repeat the last answer using zero-based indexing.
+
+\item \textbf{Polar coordinates and mounting.} Ray 61 of the preceding scan
+returns $2\,\mathrm m$. Find its sensor-frame coordinates. Transform them
+to the robot frame for mounting rotation $90^\circ$ and translation
+$[0.2\;0]\trans\,\mathrm m$. Recover the original range and bearing from
+the sensor-frame Cartesian coordinates.
+
+\item \textbf{What a scan cannot establish.} At range $5\,\mathrm m$, compute
+the chord spacing between rays separated by $1^\circ$. Explain why a narrow
+obstacle might be missed. Distinguish a blind sector, an invalid return,
+and a valid detection, and explain why plotting every missing return at
+$r_{\max}$ is misleading.
+\end{enumerate}

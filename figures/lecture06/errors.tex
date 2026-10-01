@@ -1,0 +1,15 @@
+\begin{tikzpicture}[scale=.9]
+\draw[axis] (0,0)--(4.5,0) node[right] {$F$};
+\draw[axis] (0,0)--(0,4.4) node[above] {$\bar F$};
+\draw[thick] (0,0)--(3.7,3.7) node[right] {ideal};
+\draw[thick,robotframe] (0,.6)--(3.3,3.9) node[above] {biased};
+\draw[<->] (.35,0)--(.35,.6) node[right] {$b$};
+\node at (2,-.65) {Constant offset};
+\begin{scope}[shift={(7,0)}]
+\draw[axis] (0,0)--(4.6,0) node[right] {$t$};
+\draw[axis] (0,0)--(0,4.4) node[above] {$F_{\mathrm{corr}}$};
+\draw[dashed] (0,2.5)--(4.3,2.5) node[right] {$F_0$};
+\draw[thick,sensorframe] plot coordinates {(0,2.6)(.2,2.2)(.4,2.8)(.6,2.4)(.8,2.7)(1,2.3)(1.2,2.5)(1.4,2.9)(1.6,2.4)(1.8,2.2)(2,2.6)(2.2,2.7)(2.4,2.3)(2.6,2.5)(2.8,2.8)(3,2.4)(3.2,2.6)(3.4,2.1)(3.6,2.5)(3.8,2.7)(4,2.4)};
+\node at (2,-.65) {Noise after offset correction};
+\end{scope}
+\end{tikzpicture}

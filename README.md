@@ -43,8 +43,10 @@ homogeneous transformations, inversion, numerical rounding, and pose, with
 a vector diagram and seven exercises.
 Chapter 6, "Robot systems and sensing," introduces sensing, actuation,
 processing, and the robot--environment feedback loop using the end of lecture
-05. Its opening and vector schematic are included in the PDF; later lectures
-will extend the chapter.
+05. Lecture 06 extends it with sensor classification, ADC conversion, bias,
+noise and calibration, ultrasound, infrared reflection, and planar laser
+scanning. Five vector diagrams and seven exercises support the chapter,
+including scan indexing and transformations from sensor to robot coordinates.
 Appendix A collects the rotation-conversion reference formulas, including
 scalar-first unit quaternions and singular-case notes.
 
@@ -71,20 +73,20 @@ On Overleaf, upload the project and select `main.tex` as the main document.
 - `chapters/lecture03.tex`: third lecture notes.
 - `chapters/lecture04.tex`: Chapter 4, drawing on lectures 04 and 05.
 - `chapters/lecture05.tex`: Chapter 5, spatial transformations and pose.
-- `chapters/lecture06.tex`: Chapter 6 opening on robot systems and sensing.
+- `chapters/lecture06.tex`: Chapter 6, drawing on lectures 05 and 06.
 - `appendices/rotation-conversions.tex`: conversion reference adapted from the supplied handout.
 - `figures/lecture02/`: vector diagrams drawn in TikZ and included by the chapter.
 - `figures/lecture03/`: diagrams for affine and homogeneous transformations.
 - `figures/lecture04/`: elementary rotations, angle sequence, and atan2 diagrams.
 - `figures/lecture05/`: spatial coordinate-transformation diagram.
-- `figures/lecture06/`: robot feedback diagram.
+- `figures/lecture06/`: robot feedback, measurement errors, ultrasound, scan coverage, and polar-coordinate diagrams.
 - `chapters/lecture-template.tex`: starting point for future lectures.
 - `lectures/`: original boards and transcripts (local only, excluded from Git).
 - `editorial-notes.md`: source decisions and details requiring confirmation.
 
 ## Add a lecture
 
-1. Put the next board material and transcript in `lectures/06/`, then `07/`, etc.
+1. Put the next board material and transcript in `lectures/07/`, then `08/`, etc.
 2. Assign each topic to the appropriate chapter, extending an existing chapter
    when a class continues that topic. Record the source mapping in `editorial-notes.md`.
 3. Extend Chapter 6 with the next relevant lecture. For later new
