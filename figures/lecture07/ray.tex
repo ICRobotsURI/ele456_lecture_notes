@@ -1,0 +1,10 @@
+\begin{tikzpicture}
+\draw[axis] (0,0)--(7,0) node[right] {$z_C$};
+\draw[thick,sensorframe] (1.5,-.6)--(1.5,2.3);
+\node[above,sensorframe] at (1.5,2.3) {Virtual image plane};
+\draw[axis,robotframe] (0,0)--(6.5,2.6);
+\fill (0,0) circle(2pt) node[below] {$O_C$};
+\fill[sensorframe] (1.5,.6) circle(2pt) node[below right] {one image point};
+\fill[robotframe] (3,1.2) circle(2pt) node[above] {$B_1$};
+\fill[robotframe] (5,2) circle(2pt) node[above] {$B_2$};
+\end{tikzpicture}

@@ -1,0 +1,391 @@
+\chapter{Cameras and perspective projection}
+\label{chap:lecture07}
+
+A range sensor reports a distance, whereas an ordinary camera produces an
+image. The image contains information about the appearance and direction of
+objects, but does not directly assign a three-dimensional position to each
+pixel. To use a camera in robotics, we need a model connecting spatial points
+to their image locations and an understanding of what information that mapping
+discards.
+
+This chapter first describes images as arrays of measurements, then develops
+the pinhole camera model. The forward problem predicts where a known point
+appears in an image. The reverse problem reveals why an image location alone
+does not determine depth.
+
+\section{Images as arrays of measurements}
+Light from a scene reaches a photosensitive surface. A digital image sensor
+contains an array of small sensing sites that convert incident light into
+electrical signals. Readout electronics and analog-to-digital conversion
+produce numerical values. Exposure, sensor response, and processing influence
+those values; they are not direct measurements of object distance.
+
+\subsection{Grayscale images}
+A grayscale image can be represented as an $H\times W$ matrix, where $H$
+is the number of rows and $W$ the number of columns. An 8-bit representation
+stores values from 0 to 255. With a conventional grayscale display, 0 is
+black, 255 is white, and intermediate values are shades of gray.
+Figure~\ref{fig:l07-pixels} illustrates this correspondence using a small
+image. A saturated value of 255 cannot distinguish stronger inputs beyond
+the represented range.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture07/pixels}
+\caption{A $3\times5$ array and its grayscale visualization. Each displayed
+square corresponds to one matrix entry; larger values appear brighter.}
+\label{fig:l07-pixels}
+\end{figure}
+
+Image dimensions are often written as width by height. Thus a
+$640\times480$ image has 480 rows, 640 columns, and 307,200 pixels.
+This convention reverses the order used to state matrix dimensions.
+Keeping row, column, width, and height distinct prevents indexing errors.
+
+\subsection{Color images and RGB values}
+An RGB image assigns three values to each output pixel: red, green, and blue.
+For 8-bit channels, some examples are
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+RGB values & Displayed color\\
+\midrule
+$(255,0,0)$ & Red\\
+$(0,255,0)$ & Green\\
+$(0,0,255)$ & Blue\\
+$(255,255,0)$ & Yellow\\
+$(0,0,0)$ & Black\\
+$(255,255,255)$ & White\\
+\bottomrule
+\end{tabular}
+\end{center}
+These are additive light mixtures. Mixing emitted red and green light is
+different from mixing red and green pigments. A pixel such as
+$(126,8,180)$ has strong blue and red contributions and appears purple.
+Channel order is a convention: an application using BGR requires a different
+interpretation of the same three stored numbers.
+
+\subsection{Color filters and reconstructed pixels}
+One common sensor design places a color-filter mosaic over the sensing
+sites. A Bayer pattern repeats a $2\times2$ arrangement containing one red,
+two green, and one blue filter. Figure~\ref{fig:l07-bayer} shows one possible
+arrangement. Each site measures only its filtered channel; it does not
+independently measure all three RGB components.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture07/bayer}
+\caption{An RGGB Bayer mosaic. Each letter denotes the channel sampled at
+one sensing site. Demosaicing estimates missing channels to form an RGB image.}
+\label{fig:l07-bayer}
+\end{figure}
+
+The missing color components are estimated using neighboring samples in a
+process called \emph{demosaicing}. A repeated four-site pattern should
+therefore not be confused with four independent full-color measurements or
+with a universal rule that four sites produce exactly one output pixel.
+The raw mosaic and the reconstructed RGB image are different data
+representations.\footnote{See
+\href{https://docs.baslerweb.com/demosaicing-mode}{Basler, Demosaicing Mode}.}
+
+\section{The pinhole camera model}
+An ideal pinhole camera consists of a light-tight enclosure, a small aperture,
+and an image plane behind it. In geometric optics, the ray from a scene point
+that passes through the aperture intersects the image plane at the point's
+image. Rays cross at the aperture, so the physical image is inverted.
+
+The model treats the aperture as a single \emph{projection center}. Actual
+cameras use finite apertures and lenses to collect and focus light. The
+pinhole model describes their central projection approximately; it does not
+model blur, diffraction, or lens distortion. Making a physical pinhole ever
+smaller is not an unlimited route to a sharper image, because light throughput
+and diffraction also matter.
+
+Let $C$ be the camera frame with origin $O_C$ at the projection center.
+Use the optical-axis convention
+\[
+ z_C:\text{ forward into the scene},\qquad
+ x_C:\text{ image-right},\qquad y_C:\text{ image-down}.
+\]
+These directions form a right-handed frame. In a two-dimensional section,
+the page may be rotated for readability without changing the frame definition.
+Write a scene point as
+\[
+ B^C=\begin{bmatrix}X\\Y\\Z\end{bmatrix},\qquad Z>0.
+\]
+The variables $X,Y,Z$ are the point's coordinates in $C$, measured in a
+common length unit. The quantity $Z$ is depth along the optical axis, not
+generally the Euclidean distance $\|B^C\|$.
+
+\subsection{Physical and virtual image planes}
+Place the physical image plane at $z_C=-f$, with $f>0$. The line through
+$O_C$ and $B^C$ has coordinates $\lambda[X\;Y\;Z]\trans$.
+Its intersection with the physical plane has $\lambda=-f/Z$, giving
+\[
+ x_{\mathrm{physical}}=-f\frac{X}{Z},\qquad
+ y_{\mathrm{physical}}=-f\frac{Y}{Z}.
+\]
+The negative signs express the inversion when image axes are parallel to
+the corresponding camera axes.
+
+For calculations, introduce a \emph{virtual image plane} at $z_C=f$,
+in front of the projection center. Its coordinates are
+\begin{equation}
+ \boxed{x'=f\frac{X}{Z},\qquad y'=f\frac{Y}{Z}.}
+ \label{eq:l07-metric}
+\end{equation}
+This is a modeling convention, not a physical sensor placed in front of the
+camera. It gives an upright image and removes the two negative signs.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture07/pinhole}
+\caption{A section through the $x_Cz_C$ plane, drawn with positive $x_C$
+down the page. The physical and virtual image coordinates have opposite
+signs. The $y_C$ coordinate is omitted from this section.}
+\label{fig:l07-pinhole}
+\end{figure}
+
+The same relationship follows from similar triangles. In this section,
+$X=\ell\sin\theta$ and $Z=\ell\cos\theta$, so $X/Z=\tan\theta$.
+For the virtual image triangle, $x'/f=\tan\theta$. Equating the ratios
+gives $x'=fX/Z$. Repeating the construction in the $y_Cz_C$ plane gives
+the second equation.
+
+The parameter $f$ is the projection distance in this ideal model. For a
+lens camera, an effective calibrated model is used; $f$ should not simply
+be identified with the distance from the front of the camera housing to
+the sensor. Changing focus or zoom can change the appropriate calibration.
+
+\section{From metric image coordinates to pixels}
+The coordinates $x',y'$ are lengths measured from the optical-axis
+intersection with the virtual plane. Image processing instead uses pixel
+coordinates measured relative to an image origin. Two operations are needed:
+convert lengths to pixel units and shift the origin.
+
+Let $\alpha_x,\alpha_y$ be the pixel densities along the two image axes,
+with units pixels per meter when $f$ is in meters. Define
+\[
+ f_x=\alpha_x f,\qquad f_y=\alpha_y f,
+\]
+which are focal lengths expressed in pixel units. Square sampling gives
+equal densities; the general model permits different scales.
+Let $(c_x,c_y)$ be the \emph{principal point}, the image coordinates of the
+optical-axis intersection. The projection equations are
+\begin{equation}
+ \boxed{u=f_x\frac{X}{Z}+c_x,\qquad
+ v=f_y\frac{Y}{Z}+c_y.}
+ \label{eq:l07-projection}
+\end{equation}
+Here $u$ increases to the right and $v$ downward. They correspond to the
+horizontal and vertical image coordinates, also denoted $x_B^I$ and $y_B^I$.
+The formulas assume perpendicular image axes and no distortion.
+
+\subsection{Image center and indexing conventions}
+For an ideal centered camera, a convenient continuous coordinate convention
+places the image boundaries at $u=0,W$ and $v=0,H$. Then
+\[
+ c_x=\frac W2,\qquad c_y=\frac H2.
+\]
+Under this convention the pixel centers are at half-integer coordinates.
+If instead zero-based integer coordinates label pixel centers, the geometric
+center of the array is $((W-1)/2,(H-1)/2)$. These conventions differ by half
+a pixel; either can be used consistently. In a calibrated camera, the
+principal point need not equal the exact geometric center.
+
+A projection generally gives continuous coordinates, not an integer array
+index. Selecting a pixel or interpolating an image requires a sampling rule.
+In row--column array notation, the vertical coordinate selects the row and
+the horizontal coordinate the column. A pixel location is therefore addressed
+in the order $[\text{row},\text{column}]$, corresponding to $[v,u]$ after
+the chosen conversion to indices.
+
+\subsection{What calibration provides}
+Camera calibration estimates the model parameters from observations of known
+geometry, such as a checkerboard photographed in several poses. In practice,
+calibration commonly estimates $f_x,f_y,c_x,c_y$ directly and may also
+estimate lens-distortion parameters. The separate physical quantities $f$
+and $\alpha_x,\alpha_y$ are not needed to use
+Equation~\eqref{eq:l07-projection}.\footnote{See
+\href{https://docs.opencv.org/doc/doxygen/html/d4/d93/group__calib.html}{OpenCV, Camera Calibration}.}
+
+The pinhole equations apply to an ideal or appropriately undistorted image.
+Using them on raw images with substantial unmodeled distortion introduces
+systematic position errors. A detailed calibration procedure is outside
+the scope of this chapter.
+
+\section{Worked projection example}
+Suppose a camera has
+\[
+ W=640,\quad H=480,\quad
+ \alpha_x=\alpha_y=5\times10^4\,\mathrm{px/m},\quad
+ f=3\times10^{-3}\,\mathrm m.
+\]
+Use the centered continuous-image convention, so $(c_x,c_y)=(320,240)$.
+The focal lengths in pixels are
+\[
+ f_x=f_y=(5\times10^4)(3\times10^{-3})=150\,\mathrm{px}.
+\]
+For $B^C=[2\;0\;10]\trans\,\mathrm m$,
+\begin{align}
+ u&=(150\,\mathrm{px})\frac{2\,\mathrm m}{10\,\mathrm m}
+       +320\,\mathrm{px}=350\,\mathrm{px},\\
+ v&=(150\,\mathrm{px})\frac{0\,\mathrm m}{10\,\mathrm m}
+       +240\,\mathrm{px}=240\,\mathrm{px}.
+ \label{eq:l07-example}
+\end{align}
+The ratios are dimensionless, leaving pixel units in both equations. The
+point appears 30 pixels to the right of the principal point and at the same
+vertical coordinate, as shown in Figure~\ref{fig:l07-image}.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture07/image}
+\caption{The projected location $(350,240)$ in the $640\times480$ example.
+Dashed lines pass through the principal point. Coordinates refer to the
+continuous image plane, before selecting discrete pixel indices.}
+\label{fig:l07-image}
+\end{figure}
+
+\subsection{When does a projected point appear in an image?}
+The model assumes $Z>0$. At $Z=0$ the division is undefined, while a point
+with $Z<0$ is behind a forward-looking camera even if its algebraic projection
+lies within the image bounds. A point in front must also project inside the
+image area. In the continuous boundary convention, this means
+$0\le u<W$ and $0\le v<H$ for sampling within the image.
+
+These checks establish geometric eligibility, not guaranteed visibility:
+another surface can occlude the point. Detecting the desired object in an
+image is also a separate task from computing where a known point projects.
+
+\section{Why one image point does not determine depth}
+Rearranging the projection equations gives
+\begin{equation}
+ \frac XZ=\frac{u-c_x}{f_x},\qquad
+ \frac YZ=\frac{v-c_y}{f_y}.
+ \label{eq:l07-inverse}
+\end{equation}
+The right sides are known for a calibrated camera and measured image point,
+but the left sides are ratios. Two equations constrain three spatial
+coordinates. Writing the result as a family of points makes the remaining
+ambiguity explicit:
+\begin{equation}
+ \boxed{B^C=Z\begin{bmatrix}(u-c_x)/f_x\\(v-c_y)/f_y\\1\end{bmatrix},
+ \qquad Z>0.}
+ \label{eq:l07-ray}
+\end{equation}
+The image determines a ray from the projection center. It does not specify
+where along that ray the object lies. The vector in brackets is not generally
+a unit vector: its scale factor here is axial depth $Z$, not range.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture07/ray}
+\caption{Distinct points on one viewing ray have the same image coordinates.
+Projection removes their common spatial scale.}
+\label{fig:l07-ray}
+\end{figure}
+
+In the worked example, $(u,v)=(350,240)$ gives $X/Z=0.2$ and $Y/Z=0$.
+The points $[1\;0\;5]\trans$, $[2\;0\;10]\trans$, and
+$[4\;0\;20]\trans$ all produce that same location. More generally,
+multiplying $X,Y,Z$ by any positive constant leaves their ratios unchanged.
+This geometric argument explains the ambiguity beyond simply counting
+equations and unknowns.
+
+\section{Additional information for recovering position}
+Recovering a three-dimensional point requires information beyond one
+unconstrained image location. Several sources are possible.
+
+\subsection{Two cameras}
+A stereo pair observes the same scene from distinct positions. If a point
+is matched between the images and the cameras' calibration and relative
+pose are known, the two viewing rays can be used to triangulate its position.
+The additional image coordinates are useful because they come from another
+viewpoint, not merely because more equations have been written down.
+Degenerate geometry and measurement noise can prevent a unique or accurate
+intersection. Stereo also requires identifying the same scene point in
+both images.
+
+\subsection{Known object geometry}
+Known size can supply scale information. For example, a segment of known
+length $L$ parallel to the image plane at constant depth $Z$ spans
+\[
+ s=f_x\frac LZ
+\]
+pixels when aligned with the horizontal axis. Hence $Z=f_xL/s$.
+This simple relation assumes the stated alignment and a known correspondence
+between the measured image endpoints and the object's endpoints. Unknown
+orientation or occlusion makes an apparent-size argument more complicated.
+
+\subsection{A known surface or depth}
+If $Z$ is known independently, Equation~\eqref{eq:l07-ray} determines the
+point directly. A downward-looking camera above a known level ground plane
+provides one useful special case. When its optical axis is perpendicular
+to the ground, points on that plane have axial depth equal to the camera's
+height above it. If the camera is tilted, height is not generally equal to
+each point's $Z$; the viewing ray must instead be intersected with the
+ground plane using the camera pose. A point above the ground does not satisfy
+the ground-plane assumption.
+
+These methods add hardware, known scene geometry, or constraints on the
+task. They do not remove the need to state which extra information makes
+depth recovery possible.
+
+\section{Connecting camera geometry to robot frames}
+The camera optical frame usually differs from a robot frame whose forward
+axis is $x_R$. The mounting transform includes both the position of the
+camera origin and the orientation of its axes. Once a point's camera-frame
+position has been obtained, its world coordinates are
+\begin{equation}
+ B^W=R_C^W B^C+p_C^W,\qquad
+ H_C^W=H_R^W H_C^R.
+ \label{eq:l07-world}
+\end{equation}
+The mounting calibration $H_C^R$ is distinct from the internal projection
+parameters $f_x,f_y,c_x,c_y$.
+
+Conversely, to predict the image of a known world point, first compute
+\[
+ B^C=(R_C^W)\trans(B^W-p_C^W),
+\]
+then apply Equation~\eqref{eq:l07-projection}. Coordinate transformation
+and perspective projection are different operations: the former preserves
+the spatial point, while the latter divides by depth and discards scale.
+Transforming a viewing ray into the world frame does not by itself resolve
+the missing depth.
+
+\clearpage
+\section{Additional exercises}
+Use the virtual image plane, zero distortion, and the stated continuous-image
+convention. Keep depth and Euclidean range distinct.
+\begin{enumerate}
+\item \textbf{Image representation.} How many rows, columns, and pixels are
+in a $640\times480$ image? How many bytes store an uncompressed 8-bit grayscale
+image and an 8-bit-per-channel RGB image, ignoring padding and metadata?
+
+\item \textbf{Color sampling.} Sketch a $4\times4$ RGGB Bayer mosaic.
+How many sites measure each channel? Explain why each raw site does not
+already contain an RGB triple and what demosaicing supplies.
+
+\item \textbf{Projection and visibility.} With $f_x=f_y=150$ and principal
+point $(320,240)$, project $[2\;-1\;5]\trans$ and $[12\;0\;5]\trans$.
+Which lies inside a $640\times480$ image? Explain why the algebraic projection
+of $[0\;0\;-5]\trans$ does not establish visibility.
+
+\item \textbf{Units and scale.} Let $f=4\,\mathrm{mm}$ and
+$\alpha_x=\alpha_y=10^5\,\mathrm{px/m}$. Find $f_x,f_y$.
+Using principal point $(320,240)$, project $[1\;0.5\;4]\trans\,\mathrm m$.
+What changes if all three point coordinates are doubled?
+
+\item \textbf{Back-projection.} For $f_x=f_y=150$, principal point $(320,240)$,
+and image location $(350,255)$, write the full viewing ray.
+Find its point at depth $Z=8\,\mathrm m$ and compute that point's range.
+Explain why the image alone cannot select this depth.
+
+\item \textbf{Known size.} A horizontal segment of length $0.4\,\mathrm m$
+lies parallel to the image plane and spans 20 pixels with $f_x=150$.
+Find its depth. Name two assumptions that could fail when this method is
+applied to an arbitrary object in a photograph.
+
+\item \textbf{Camera and world frames.} A camera has $R_C^W=I_3$ and
+$p_C^W=[1\;0\;2]\trans\,\mathrm m$. For the world point
+$B^W=[3\;0\;12]\trans\,\mathrm m$, compute $B^C$ and project it using
+$f_x=f_y=150$, $(c_x,c_y)=(320,240)$. Explain what additional information
+would be needed to reverse this calculation from the image point alone.
+\end{enumerate}

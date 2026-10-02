@@ -1,0 +1,15 @@
+\begin{tikzpicture}[scale=.7]
+\foreach \row in {0,1,2,3} {
+\foreach \col in {0,1,2,3} {
+\pgfmathtruncatemacro{\kind}{mod(\row,2)*2+mod(\col,2)}
+\ifcase\kind\def\shade{red!40}\def\letter{R}
+\or\def\shade{green!35}\def\letter{G}
+\or\def\shade{green!35}\def\letter{G}
+\or\def\shade{blue!35}\def\letter{B}\fi
+\filldraw[fill=\shade] (\col,-\row) rectangle +(1,-1);
+\node at (\col+.5,-\row-.5) {\letter};
+}}
+\node[above] at (2,0) {One channel sampled per site};
+\draw[axis] (4.4,-2)--(6.5,-2) node[midway,above] {demosaic};
+\node[draw,align=center,minimum height=1.8cm] at (8.3,-2) {RGB image\\three values\\per output pixel};
+\end{tikzpicture}

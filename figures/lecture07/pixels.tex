@@ -1,0 +1,13 @@
+\begin{tikzpicture}[scale=.8]
+\foreach \row/\values in {0/{70,150,230,150,70},1/{150,230,255,230,150},2/{70,150,230,150,70}} {
+\foreach \v [count=\col from 0] in \values {
+\node at (\col+.5,-\row-.5) {$\v$};
+\pgfmathsetmacro{\shade}{\v/255*100}
+\fill[white!\shade!black] (\col+7,-\row) rectangle +(1,-1);
+}}
+\draw[step=1] (0,0) grid (5,-3);
+\draw[step=1] (7,0) grid (12,-3);
+\draw[axis] (5.3,-1.5)--(6.7,-1.5);
+\node[above] at (2.5,0) {Stored intensities};
+\node[above] at (9.5,0) {Grayscale display};
+\end{tikzpicture}

@@ -47,6 +47,10 @@ processing, and the robot--environment feedback loop using the end of lecture
 noise and calibration, ultrasound, infrared reflection, and planar laser
 scanning. Five vector diagrams and seven exercises support the chapter,
 including scan indexing and transformations from sensor to robot coordinates.
+Chapter 7, "Cameras and perspective projection," covers grayscale and RGB
+images, Bayer sampling, pinhole geometry, pixel coordinates, calibration,
+depth ambiguity, and camera-to-world transformations. Five vector figures
+and seven exercises accompany the worked projection example.
 Appendix A collects the rotation-conversion reference formulas, including
 scalar-first unit quaternions and singular-case notes.
 
@@ -74,22 +78,24 @@ On Overleaf, upload the project and select `main.tex` as the main document.
 - `chapters/lecture04.tex`: Chapter 4, drawing on lectures 04 and 05.
 - `chapters/lecture05.tex`: Chapter 5, spatial transformations and pose.
 - `chapters/lecture06.tex`: Chapter 6, drawing on lectures 05 and 06.
+- `chapters/lecture07.tex`: Chapter 7, cameras and perspective projection.
 - `appendices/rotation-conversions.tex`: conversion reference adapted from the supplied handout.
 - `figures/lecture02/`: vector diagrams drawn in TikZ and included by the chapter.
 - `figures/lecture03/`: diagrams for affine and homogeneous transformations.
 - `figures/lecture04/`: elementary rotations, angle sequence, and atan2 diagrams.
 - `figures/lecture05/`: spatial coordinate-transformation diagram.
 - `figures/lecture06/`: robot feedback, measurement errors, ultrasound, scan coverage, and polar-coordinate diagrams.
+- `figures/lecture07/`: grayscale, Bayer sampling, pinhole, image-coordinate, and viewing-ray diagrams.
 - `chapters/lecture-template.tex`: starting point for future lectures.
 - `lectures/`: original boards and transcripts (local only, excluded from Git).
 - `editorial-notes.md`: source decisions and details requiring confirmation.
 
 ## Add a lecture
 
-1. Put the next board material and transcript in `lectures/07/`, then `08/`, etc.
+1. Put the next board material and transcript in `lectures/08/`, then `09/`, etc.
 2. Assign each topic to the appropriate chapter, extending an existing chapter
    when a class continues that topic. Record the source mapping in `editorial-notes.md`.
-3. Extend Chapter 6 with the next relevant lecture. For later new
+3. Extend the appropriate chapter when a topic continues. For new
    chapters, copy `chapters/lecture-template.tex` and use a descriptive title
    and unique labels. The `lectureNN.tex` filenames now identify chapter slots.
 4. Include new chapters in `main.tex` before `\appendix`.

@@ -1,0 +1,17 @@
+\begin{tikzpicture}[scale=.95]
+\draw[axis] (-2.7,0)--(6.5,0) node[right] {$z_C$};
+\draw[axis] (0,0)--(0,-2.4) node[below] {$x_C$};
+\draw[very thick] (-2,-1.9)--(-2,1.9);
+\draw[thick,sensorframe] (2,-1.9)--(2,1.9);
+\node[above,align=center] at (-2,1.9) {Physical plane\\$z_C=-f$};
+\node[above,align=center,sensorframe] at (2,1.9) {Virtual plane\\$z_C=f$};
+\draw[thick,robotframe] (-2,.6)--(5,-1.5);
+\fill (0,0) circle(2pt) node[above right] {$O_C$};
+\fill[robotframe] (5,-1.5) circle(2pt) node[right] {$B=(X,Y,Z)$};
+\fill[robotframe] (-2,.6) circle(2pt);
+\fill[sensorframe] (2,-.6) circle(2pt) node[right] {$x'=fX/Z$};
+\draw[projection] (5,-1.5)--(5,0);
+\draw[<->] (0,-2)--(2,-2) node[midway,below] {$f$};
+\draw[<->] (-2,-2)--(0,-2) node[midway,below] {$f$};
+\node[left] at (-2,.6) {$-fX/Z$};
+\end{tikzpicture}

@@ -1,0 +1,12 @@
+\begin{tikzpicture}[x=.012cm,y=-.012cm]
+\draw[thick] (0,0) rectangle (640,480);
+\draw[axis] (0,0)--(690,0) node[right] {$u$};
+\draw[axis] (0,0)--(0,520) node[below] {$v$};
+\draw[projection] (320,0)--(320,480);
+\draw[projection] (0,240)--(640,240);
+\fill (320,240) circle(2pt) node[below left] {$(320,240)$};
+\fill[robotframe] (350,240) circle(2pt) node[above right] {$B:\ (350,240)$};
+\node[above] at (320,-10) {$W=640$};
+\node[right] at (650,380) {$H=480$};
+\node[above left] at (0,0) {$(0,0)$};
+\end{tikzpicture}
