@@ -1,0 +1,16 @@
+\begin{tikzpicture}[x=1cm,y=1cm,
+ block/.style={draw,rounded corners,align=center,minimum height=1cm,font=\small}]
+\node[block,text width=2.4cm] (c) at (0,0) {Microcontroller\\controller + PWM};
+\node[block,text width=1.4cm] (d) at (3,0) {Motor\\driver};
+\node[block,text width=1.1cm] (m) at (5.5,0) {Motor};
+\node[block,text width=2.1cm] (g) at (8.3,0) {Transmission};
+\node[block] (s) at (3,1.8) {Power supply};
+\node[block,text width=1.5cm] (e) at (4,-1.8) {Encoder};
+\draw[axis] (c)--node[above=10pt]{command}(d);
+\draw[axis] (s)--(d);
+\draw[axis] (d)--(m);
+\draw[axis] (m)--node[above]{$\omega_m$}(g);
+\draw[axis] (g.east)--++(1.1,0) node[right]{$\omega$};
+\draw[axis] (6.7,0)|-(e.east);
+\draw[axis,sensorframe] (e.west)-|node[pos=.2,below]{counts}(c.south);
+\end{tikzpicture}

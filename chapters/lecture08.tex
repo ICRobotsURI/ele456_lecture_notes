@@ -1,0 +1,382 @@
+\chapter{Motors, transmissions, and speed control}
+\label{ch:motors}
+
+A robot must turn a numerical command into physical motion. This requires
+more than a motor: a controller generates a command, a driver supplies power,
+a transmission adapts the motion, and a sensor measures the result. This
+chapter follows that chain for a motor-driven wheel, then closes the loop
+by comparing measured speed with desired speed.
+
+\section{From a command to motion}
+An electric motor converts electrical energy into mechanical motion. Its
+shaft rotates at angular velocity $\omega_m$. A transmission connects that
+shaft to a wheel or another mechanism, whose angular velocity $\omega$ may
+be quite different. The controller determines how the motor should operate,
+but the energy that moves the load comes from a power supply.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture08/chain}
+\caption{The actuation chain. The encoder measures the motor shaft before
+the transmission. Its signals return to the microcontroller for speed estimation
+and feedback. The motor power supply feeds the driver directly.}
+\label{fig:l08-chain}
+\end{figure}
+
+The driver, also called a power amplifier, bridges the gap between a small
+control signal and the power required by the actuator. A microcontroller's
+digital output is intended to communicate a logic state; it is not a motor
+power source. Motor current, particularly during starting or stall, can exceed
+what a logic pin can supply. The driver switches energy from its supply to
+the motor according to the controller's command. The controller and driver
+must also have compatible signal levels and, in an ordinary nonisolated
+connection, a common electrical reference.
+
+A driver does not create energy or necessarily reproduce the input voltage
+amplitude. For example, a logic-level command can control switching of a
+separate motor supply at a different voltage. Driver and supply ratings must
+match the motor and load; connector size alone does not establish those ratings.
+
+\section{Pulse-width modulation}
+\subsection{Representing an intermediate command with two levels}
+A digital output can hold a low or a high voltage. To obtain an adjustable
+average without generating every intermediate voltage directly, it can switch
+periodically between those two levels. In \emph{pulse-width modulation}
+(PWM), the duration of the high part of each period sets the command.
+
+Let $T$ be the period and $t_{\mathrm{on}}$ the time spent high. The
+\emph{duty cycle} and switching frequency are
+\begin{equation}
+ D=\frac{t_{\mathrm{on}}}{T},\qquad 0\le D\le1,
+ \qquad f_{\mathrm{PWM}}=\frac1T.
+\end{equation}
+For levels $V_L$ and $V_H$, the average over one period is
+\begin{equation}
+ \overline V=DV_H+(1-D)V_L.
+ \label{eq:l08-average}
+\end{equation}
+With $V_L=0$ and $V_H=5\,\mathrm V$, a 50\% duty cycle has average
+$2.5\,\mathrm V$; a 75\% duty cycle has average $3.75\,\mathrm V$.
+The instantaneous voltage still switches between 0 and $5\,\mathrm V$.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture08/pwm}
+\caption{PWM with a fixed period and a change in duty cycle. Dashed blue
+lines show the per-period averages, not additional voltage levels produced
+by the digital pin. Here $T=1\,\mathrm{ms}$ and $f_{\mathrm{PWM}}=1\,\mathrm{kHz}$.}
+\label{fig:l08-pwm}
+\end{figure}
+
+\subsection{Why the shaft does not start and stop at every pulse}
+The motor and load have inertia, so their speed cannot change instantaneously.
+Winding inductance also affects how rapidly current changes. With a suitable
+switching frequency, the mechanical response is much smoother than the
+electrical waveform. An averaged description is then useful, although
+current and torque can still have ripple.
+
+This does not mean that angular velocity equals average voltage: they have
+different units. Speed depends on the motor, supply, load, friction, and
+driver. Increasing duty cycle generally increases the drive available in a
+fixed direction, but a duty cycle alone does not specify an exact speed.
+Likewise, zero duty does not necessarily stop a moving wheel immediately;
+the result depends on inertia and the driver's braking or coasting behavior.
+
+\subsection{Digital resolution}
+An 8-bit command has $2^8=256$ possible values, commonly numbered 0 through
+255. In a simple endpoint-inclusive command model,
+\[
+ D\approx\frac n{255},\qquad n\in\{0,1,\ldots,255\}.
+\]
+For example, $n=128$ requests approximately 50\% duty. Exact timing depends
+on the timer and its configuration. PWM-capable pins, frequency, voltage,
+and resolution are hardware-dependent; they are not universal properties of
+all microcontrollers.\footnote{For a concrete implementation, see
+\href{https://support.arduino.cc/hc/en-us/articles/9350537961500-Use-PWM-output-with-Arduino}{Arduino's PWM documentation}.}
+
+\section{Other forms of actuation}
+Electrical motors are common in mobile robots, but the same separation
+between command and power applies to fluid-powered actuators. Hydraulic
+systems use a liquid; pneumatic systems use a gas. A controlled valve routes
+pressurized fluid to an actuator, rather than an electrical driver supplying
+motor current.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture08/cylinder}
+\caption{A double-acting cylinder, shown schematically. Fluid pressure acts
+on the two faces of the piston. The rod makes their effective areas unequal.}
+\end{figure}
+
+For the cylinder shown, pressure in chamber A pushes the piston to the right,
+while pressure in chamber B pushes it to the left. Using pressures relative
+to the surrounding pressure, the ideal fluid force to the right is
+\[
+ F=p_A A_A-p_B A_B.
+\]
+External load and friction also enter the force balance. Motion therefore
+does not simply continue until the chamber pressures are equal: the effective
+areas and applied load matter. The remaining sections focus on a rotary
+electric motor driving a wheel.
+
+\section{Transmissions and reduction ratio}
+A motor may rotate faster than the wheel needs to rotate. A gear train can
+reduce this speed and adapt the available torque. Transmissions can also
+relocate an axis, change its direction, or convert rotation into translation.
+
+Define the positive reduction ratio by the speed magnitudes,
+\begin{equation}
+ R=\frac{|\omega_m|}{|\omega|}.
+ \label{eq:l08-ratio}
+\end{equation}
+For a reduction, $R>1$. Once the positive directions of the two shafts have
+been chosen to correspond through the transmission, the signed relation is
+\begin{equation}
+ \omega=\frac{\omega_m}{R}.
+ \label{eq:l08-wheelomega}
+\end{equation}
+This convention absorbs any reversal caused by the gear train into the shaft
+coordinate definitions. If both axes instead use the same physical viewing
+direction, a reversing transmission requires a minus sign.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture08/transmission}
+\caption{Motor-side sensing and wheel-side motion. The gearbox represents
+the entire transmission, not a particular number or arrangement of gears.
+The encoder resolution refers to the shaft on which it is mounted.}
+\label{fig:l08-transmission}
+\end{figure}
+
+For $R=100$, one wheel revolution requires 100 motor revolutions. Reduction
+does not provide free mechanical power: ideally, the decrease in speed is
+accompanied by an increase in torque, while real transmissions dissipate
+some energy. Backlash and compliance can also make wheel motion differ
+slightly from the motion inferred at the motor shaft.
+
+\section{Encoders and speed measurement}
+An incremental encoder produces transitions as its shaft turns. A magnetic
+encoder can use a rotating magnet and Hall-effect sensors; an optical encoder
+uses a different sensing principle to obtain similar position increments.
+Counting these increments over a known time interval gives a speed estimate.
+
+One periodic channel provides information about the amount of rotation but
+does not, by itself, distinguish the two directions. Two suitably phased
+channels allow direction to be inferred from their transition order.
+In a quadrature encoder, channels A and B are offset by a quarter of an
+electrical cycle. Reversing rotation reverses which channel leads. This phase
+offset need not equal a 90-degree mechanical separation of the sensors.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture08/encoder}
+\caption{Ideal quadrature signals for one direction. Channel A rises before
+channel B. Reversing the direction reverses the sequence. Counting all edges
+of both channels gives four counts per electrical cycle.}
+\end{figure}
+
+\subsection{Keeping the counting convention explicit}
+Let $N$ denote the number of \emph{counted events per motor revolution},
+also called ticks per revolution (TPR) here. It must match the decoding
+method: counting rising edges of one channel is different from counting
+both edges of both channels. Manufacturer terms such as pulses and counts
+must be interpreted together with the stated convention.
+
+If $\Delta n$ signed counts are accumulated over an interval $\Delta t$, then
+\begin{equation}
+ \overline\omega_m=\frac{2\pi\Delta n}{N\Delta t}
+ \quad\text{in radians per second}.
+ \label{eq:l08-encoder}
+\end{equation}
+The overbar denotes an estimate obtained from the encoder. In particular,
+the count rate $q=\Delta n/\Delta t$ in ticks per second is converted to
+angular velocity by multiplying by $2\pi/N$.
+
+An estimate is not the exact instantaneous speed. Finite counts cause
+quantization, and the counting window averages motion over time. A longer
+window can improve count resolution while delaying the response to speed
+changes. Missed transitions and mechanical uncertainty introduce further
+errors. At low speed, measuring the time between transitions is another
+possible approach.
+
+\section{From encoder counts to wheel speed}
+For a wheel of radius $r$ rolling without slip along a stationary surface,
+its center's velocity component in the rolling direction satisfies
+\begin{equation}
+ v=r\omega.
+ \label{eq:l08-rolling}
+\end{equation}
+The same quantity is the magnitude of the rim's tangential velocity relative
+to the wheel center. It is not the ground-frame velocity of the material
+point touching the ground: that point is instantaneously at rest in ideal
+rolling. For a robot with multiple wheels, their velocities must be combined
+using the robot's kinematic model to obtain its overall motion.
+
+Combining the encoder conversion, reduction, and rolling relation gives
+\begin{equation}
+ \boxed{\overline v=\frac{2\pi r}{NR}\frac{\Delta n}{\Delta t}.}
+ \label{eq:l08-speed}
+\end{equation}
+This is a wheel-based estimate. If the wheel slips, encoder measurements can
+still describe shaft rotation accurately while failing to describe travel
+over the ground.
+
+\subsection{Worked example: reconstructing motion}
+Suppose the motor encoder provides $N=8$ counted ticks per revolution,
+the reduction is $R=100$, and the wheel radius is $r=0.05\,\mathrm m$.
+The measured count rate is $q=40\,\mathrm{ticks/s}$. First convert units:
+\begin{align*}
+ \overline\omega_m
+ &=40\,\frac{\mathrm{ticks}}{\mathrm s}
+   \frac{1\,\mathrm{rev}}{8\,\mathrm{ticks}}
+   \frac{2\pi\,\mathrm{rad}}{\mathrm{rev}}\\
+ &=10\pi\,\mathrm{rad/s}\approx31.416\,\mathrm{rad/s}.
+\end{align*}
+The transmission then gives
+\[
+ \overline\omega=\frac{10\pi}{100}
+ =0.1\pi\,\mathrm{rad/s}\approx0.31416\,\mathrm{rad/s}.
+\]
+Finally,
+\[
+ \overline v=0.05(0.1\pi)
+ =0.005\pi\,\mathrm{m/s}\approx0.015708\,\mathrm{m/s}.
+\]
+Thus the estimated rolling speed is about $1.57\,\mathrm{cm/s}$.
+The first step changes units; the second describes the transmission; the
+third converts angular motion into linear motion using the wheel radius.
+
+\section{From desired wheel speed to desired motor speed}
+The same relationships can be used in reverse. A desired rolling speed
+$v_d$ implies
+\begin{equation}
+ \omega_d=\frac{v_d}{r},\qquad
+ \boxed{\omega_{m,d}=\frac{R}{r}v_d.}
+ \label{eq:l08-desired}
+\end{equation}
+Using the same hardware and $v_d=0.1\,\mathrm{m/s}$,
+\[
+ \omega_d=\frac{0.1}{0.05}=2\,\mathrm{rad/s},\qquad
+ \omega_{m,d}=100(2)=200\,\mathrm{rad/s}.
+\]
+The corresponding expected encoder count rate would be
+\[
+ q_d=\frac{N}{2\pi}\omega_{m,d}
+ =\frac{800}{\pi}\,\mathrm{ticks/s}
+ \approx254.65\,\mathrm{ticks/s}.
+\]
+This calculation specifies a target motor speed. It does not yet determine
+which PWM command will achieve it under a particular load.
+
+\section{Closing the speed-control loop}
+In open-loop operation, a chosen command is applied without correcting it
+from the measured outcome. Feedback instead compares the desired motor
+speed with the measured motor speed:
+\begin{equation}
+ e(t)=\omega_{m,d}(t)-\overline\omega_m(t).
+ \label{eq:l08-error}
+\end{equation}
+Both terms must use the same units and shaft reference. Subtracting a wheel
+speed from a motor speed, or radians per second from ticks per second,
+would not produce the intended error.
+
+For a fixed forward direction, a positive error indicates that the motor is
+too slow; a negative error indicates that it is too fast. A controller uses
+this information to adjust the command. The encoder return path in
+Figure~\ref{fig:l08-chain} completes this feedback loop. A motor operated
+with such feedback is part of a servo system; this does not imply that it is
+an integrated hobby position servo.
+
+\subsection{Setting a command versus changing a command}
+Let $u$ be a normalized drive command. A proportional controller directly
+sets the command from the current error:
+\begin{equation}
+ u(t)=K_P e(t),\qquad K_P>0.
+ \label{eq:l08-p}
+\end{equation}
+For a forward-only drive, the applied duty is limited to $[0,1]$. A driver
+that supports reversal can instead interpret a signed command through
+separate direction and duty settings.
+
+There is a useful distinction between Equation~\eqref{eq:l08-p} and the
+instruction ``increase the existing command while the error is positive.''
+If the latter is implemented as
+\begin{equation}
+ \dot u(t)=k e(t),
+ \qquad\text{then}\qquad
+ u(t)=u(0)+k\int_0^t e(\tau)\,d\tau.
+ \label{eq:l08-incremental}
+\end{equation}
+It accumulates error and is integral action on the command. With sample
+interval $T_s$, a corresponding update is
+$u_{k+1}=u_k+kT_s e_k$, followed by the appropriate command limits.
+The distinction matters: a dot over the command changes the controller.
+
+\subsection{A brief introduction to PID}
+A conventional ideal proportional--integral--derivative controller combines
+three contributions to the command itself:
+\begin{equation}
+ u(t)=K_P e(t)+K_I\int_0^t e(\tau)\,d\tau
+       +K_D\frac{de(t)}{dt}.
+ \label{eq:l08-pid}
+\end{equation}
+The proportional term responds to present error, the integral term to
+accumulated error, and the derivative term to the rate of change of error.
+The gains have different units because these three inputs have different
+units.\footnote{See the parallel PID form in
+\href{https://www.mathworks.com/help/control/ug/proportional-integral-derivative-pid-controllers.html}{MathWorks' PID overview}.}
+
+Proportional control can leave a steady speed error when a nonzero command
+is needed to sustain motion. Integral action can remove a constant offset
+when the closed loop is stable and the requested speed is achievable.
+Derivative action is sensitive to measurement noise and is usually filtered
+in practical implementations. Command saturation also needs attention:
+continued accumulation while the drive is already at its limit can produce
+integral windup.
+
+Choosing gains determines how quickly the system responds and whether it
+oscillates or becomes unstable. A fast processor alone does not guarantee
+good control. The feedback update period and the PWM switching period are
+distinct: many switching cycles may occur between feedback updates. Detailed
+controller design is beyond the present introduction; the essential idea is
+to measure the outcome and use the error to correct the drive.
+
+\clearpage
+\section{Additional exercises}
+Use positive directions that correspond through the transmission. Unless
+otherwise stated, the encoder is on the motor shaft and the wheel rolls
+without slip.
+\begin{enumerate}
+\item \textbf{PWM timing.} A signal switches between 0 and $5\,\mathrm V$
+at $1\,\mathrm{kHz}$. Find its period, high time, and average voltage for
+duty cycles of 20\%, 50\%, and 80\%. Explain why the average voltage is
+not an angular velocity.
+
+\item \textbf{Command resolution.} Use $D=n/255$ for an 8-bit command.
+Choose the nearest integer command for 60\% duty and calculate the resulting
+average of a 0--$5\,\mathrm V$ signal. How many command values are available?
+
+\item \textbf{Encoder conversion.} A motor encoder produces 12 counted
+events per revolution. During $0.2\,\mathrm s$, the controller records 36
+forward counts. Find the count rate, motor speed in revolutions per second,
+and motor speed in radians per second. For $R=50$ and $r=0.04\,\mathrm m$,
+find the wheel's rolling speed.
+
+\item \textbf{Desired motion.} For the hardware in Exercise 3, determine
+the desired motor speed and expected count rate for $v_d=0.12\,\mathrm{m/s}$.
+Why does this not determine the required duty cycle uniquely?
+
+\item \textbf{Counting conventions.} A quadrature encoder produces eight
+complete electrical cycles per motor revolution on each channel. Determine
+$N$ when counting only rising edges of A and when counting every edge of
+both A and B. What speed error results if software uses the first value of
+$N$ while actually counting with the second method?
+
+\item \textbf{Resolution and slip.} Using $N=8$, $R=100$, and
+$r=0.05\,\mathrm m$, find the inferred travel per count. Find the change
+in estimated speed caused by one extra count in windows of $0.01$ and
+$0.1\,\mathrm s$. Explain the resolution--delay tradeoff and why neither
+window can correct wheel slip by itself.
+
+\item \textbf{Feedback.} Let $\omega_{m,d}=200\,\mathrm{rad/s}$ and
+$\overline\omega_m=170\,\mathrm{rad/s}$. Compute the error. With
+$K_P=0.01\,\mathrm{s/rad}$, find the proportional command $u=K_Pe$.
+Separately, starting from $u_k=0.4$, evaluate the incremental update
+$u_{k+1}=u_k+kT_s e_k$ for $k=0.2\,\mathrm{rad}^{-1}$ and
+$T_s=0.01\,\mathrm s$. Explain why these are different controllers.
+\end{enumerate}

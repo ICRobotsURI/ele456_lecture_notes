@@ -1,0 +1,11 @@
+\begin{tikzpicture}[x=1cm,y=.7cm]
+\node[left] at (0,2.5) {A};
+\node[left] at (0,.5) {B};
+\draw[gray!40] (0,2)--(8.5,2);
+\draw[gray!40] (0,0)--(8.5,0);
+\draw[thick,sensorframe] (0,2)--(1,2)--(1,3)--(3,3)--(3,2)--(5,2)--(5,3)--(7,3)--(7,2)--(8.5,2);
+\draw[thick,robotframe] (0,0)--(2,0)--(2,1)--(4,1)--(4,0)--(6,0)--(6,1)--(8,1)--(8,0)--(8.5,0);
+\foreach \i in {1,...,8} {\draw[projection,gray] (\i,-.3)--(\i,3.3);}
+\draw[axis] (0,-.7)--(9,-.7) node[right]{$t$};
+\draw[<->] (1,3.7)--node[above]{one electrical cycle}(5,3.7);
+\end{tikzpicture}

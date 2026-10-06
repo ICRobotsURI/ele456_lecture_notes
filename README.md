@@ -51,6 +51,10 @@ Chapter 7, "Cameras and perspective projection," covers grayscale and RGB
 images, Bayer sampling, pinhole geometry, pixel coordinates, calibration,
 depth ambiguity, and camera-to-world transformations. Five vector figures
 and seven exercises accompany the worked projection example.
+Chapter 8, "Motors, transmissions, and speed control," follows the actuation
+chain through PWM, motor drivers, gearing, encoders, wheel-speed estimation,
+and feedback. Five vector diagrams, two worked motion examples, and seven
+exercises connect electrical commands to mechanical motion.
 Appendix A collects the rotation-conversion reference formulas, including
 scalar-first unit quaternions and singular-case notes.
 
@@ -79,6 +83,7 @@ On Overleaf, upload the project and select `main.tex` as the main document.
 - `chapters/lecture05.tex`: Chapter 5, spatial transformations and pose.
 - `chapters/lecture06.tex`: Chapter 6, drawing on lectures 05 and 06.
 - `chapters/lecture07.tex`: Chapter 7, cameras and perspective projection.
+- `chapters/lecture08.tex`: Chapter 8, motors, transmissions, and speed control.
 - `appendices/rotation-conversions.tex`: conversion reference adapted from the supplied handout.
 - `figures/lecture02/`: vector diagrams drawn in TikZ and included by the chapter.
 - `figures/lecture03/`: diagrams for affine and homogeneous transformations.
@@ -86,13 +91,14 @@ On Overleaf, upload the project and select `main.tex` as the main document.
 - `figures/lecture05/`: spatial coordinate-transformation diagram.
 - `figures/lecture06/`: robot feedback, measurement errors, ultrasound, scan coverage, and polar-coordinate diagrams.
 - `figures/lecture07/`: grayscale, Bayer sampling, pinhole, image-coordinate, and viewing-ray diagrams.
+- `figures/lecture08/`: actuation chain, PWM, cylinder, transmission, and encoder diagrams.
 - `chapters/lecture-template.tex`: starting point for future lectures.
 - `lectures/`: original boards and transcripts (local only, excluded from Git).
 - `editorial-notes.md`: source decisions and details requiring confirmation.
 
 ## Add a lecture
 
-1. Put the next board material and transcript in `lectures/08/`, then `09/`, etc.
+1. Put the next board material and transcript in `lectures/09/`, then `10/`, etc.
 2. Assign each topic to the appropriate chapter, extending an existing chapter
    when a class continues that topic. Record the source mapping in `editorial-notes.md`.
 3. Extend the appropriate chapter when a topic continues. For new
