@@ -1,0 +1,492 @@
+\chapter{Differential-drive kinematics and odometry}
+\label{ch:odometry}
+
+Controlling one wheel does not yet describe how an entire robot moves.
+A mobile robot combines the motion of several wheels, and its position
+changes in a fixed reference frame. This chapter develops that connection
+for a differential-drive robot, then uses the resulting model to estimate
+position and orientation from wheel measurements.
+
+\section{Geometry and assumptions}
+A \emph{differential-drive robot} has two independently driven wheels on
+a common axle line. Each wheel has its own motor; the axle line need not
+be a single mechanical shaft. A passive caster can provide support without
+setting the drive velocities. This arrangement allows the robot to travel
+straight, follow a curve, or turn in place.
+
+Choose the midpoint $P$ between the drive wheels as the origin of the robot
+frame. Let $x_R$ point forward, $y_R$ point left, and $z_R$ point upward.
+In the world frame, the midpoint has coordinates $(x,y)$ and the heading
+$\theta$ is measured counterclockwise from $x_W$ to $x_R$. The planar pose is
+\begin{equation}
+ q=\begin{bmatrix}x\\y\\\theta\end{bmatrix}.
+ \label{eq:l09-pose}
+\end{equation}
+It is also the state of the kinematic model used here. A model that includes
+motor or body dynamics would generally require additional state variables.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture09/geometry}
+\caption{A differential-drive robot viewed from above. The frame origin
+is the axle midpoint. Wheel-center separation is $d$, and each wheel has
+radius $r$. Both wheel velocities are positive in the robot's forward direction.}
+\label{fig:l09-geometry}
+\end{figure}
+
+Assume that the robot moves on a plane, the chassis is rigid, the wheel
+radii are equal to $r$, and the wheel-center separation is $d>0$. Both
+wheels remain in contact with the ground and roll without longitudinal
+or lateral slip. These are ideal kinematic constraints, not a claim that
+physical friction is infinite. They are useful when the available traction
+is sufficient for the motion being considered.
+
+The wheel angular velocities $\omega_R$ and $\omega_L$ describe rotation
+about the wheel axles. The robot angular velocity $\omega=\dot\theta$
+describes yaw about the vertical axis. These are different rotations.
+Choose the sign of each wheel coordinate so that positive wheel rotation
+produces forward rolling. Then the signed wheel-center velocities along
+$x_R$ are
+\begin{equation}
+ v_R=r\omega_R,\qquad v_L=r\omega_L.
+ \label{eq:l09-wheel}
+\end{equation}
+Here the subscripts R and L mean right and left wheels; they do not denote
+coordinate frames. Motor-side encoder rates must first be converted through
+the transmission as in Chapter~\ref{ch:motors}.
+
+\section{From wheel velocities to robot motion}
+Let $v$ be the forward velocity of $P$. A point at lateral coordinate $y_R$
+on the axle has forward velocity $v-\omega y_R$: the contribution from
+rotation changes sign on opposite sides of the midpoint. Since the right
+wheel is at $y_R=-d/2$ and the left wheel at $y_R=d/2$,
+\[
+ v_R=v+\frac d2\omega,\qquad
+ v_L=v-\frac d2\omega.
+\]
+Adding and subtracting these two equations gives
+\begin{equation}
+ \boxed{v=\frac{v_R+v_L}{2}=\frac r2(\omega_R+\omega_L),
+ \qquad \omega=\frac{v_R-v_L}{d}
+ =\frac r d(\omega_R-\omega_L).}
+ \label{eq:l09-forward}
+\end{equation}
+The midpoint velocity is the mean of the two wheel velocities. Their
+difference determines the turning rate. For the same velocity difference,
+a larger wheel separation produces a smaller turning rate.
+
+Several limiting cases help check the signs. Equal wheel velocities give
+$\omega=0$, so the robot travels straight. Equal and opposite wheel
+velocities give $v=0$, so the midpoint remains stationary while the body
+turns. With both wheels moving forward, a faster right wheel gives positive
+$\omega$, so the robot turns left.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture09/motions}
+\caption{Three motions viewed from above, with forward pointing upward.
+Arrow lengths indicate wheel speeds. In-place turning uses opposite wheel
+directions; curved travel uses unequal forward speeds.}
+\end{figure}
+
+\subsection{The inverse mapping}
+A motion planner may specify desired $v$ and $\omega$, while the wheel
+controllers require wheel angular velocities. Solving
+Equation~\eqref{eq:l09-forward} in the other direction gives
+\begin{equation}
+ \boxed{\omega_R=\frac{2v+d\omega}{2r},\qquad
+ \omega_L=\frac{2v-d\omega}{2r}.}
+ \label{eq:l09-inverse}
+\end{equation}
+The parameters $r$ and $d$ describe the hardware; $v$ and $\omega$ describe
+the requested motion. The resulting wheel commands must still lie within
+the motors' speed and acceleration capabilities. For odometry, measured
+wheel velocities are preferable to requested ones, since a command is not
+a guarantee of what the robot actually does.
+
+\subsection{Worked example: wheel and body velocities}
+Suppose $r=0.05\,\mathrm m$, $d=0.30\,\mathrm m$,
+$\omega_R=6\,\mathrm{rad/s}$, and $\omega_L=2\,\mathrm{rad/s}$.
+Then
+\[
+ v_R=0.30\,\mathrm{m/s},\quad v_L=0.10\,\mathrm{m/s},\quad
+ v=0.20\,\mathrm{m/s},\quad \omega=\frac23\,\mathrm{rad/s}.
+\]
+The robot moves forward and turns left. Substituting these body velocities
+into Equation~\eqref{eq:l09-inverse} recovers $6$ and $2\,\mathrm{rad/s}$.
+
+\section{The unicycle model}
+Once wheel velocities have been mapped to $(v,\omega)$, the chassis motion
+can be described by a single oriented point at $P$. This abstraction is
+called the \emph{unicycle model}. It preserves forward motion and turning,
+without retaining the two individual wheels in the pose equations.
+
+The midpoint cannot move sideways instantaneously under the no-slip
+assumption. Its velocity in robot coordinates is therefore $[v\;0]\trans$.
+Rotating this vector into world coordinates gives
+\begin{equation}
+ \begin{bmatrix}\dot x\\\dot y\end{bmatrix}
+ =\begin{bmatrix}\cos\theta&-\sin\theta\\
+                  \sin\theta&\cos\theta\end{bmatrix}
+  \begin{bmatrix}v\\0\end{bmatrix}.
+\end{equation}
+Together with $\dot\theta=\omega$, the model becomes
+\begin{equation}
+ \boxed{\dot x=v\cos\theta,\qquad
+        \dot y=v\sin\theta,\qquad \dot\theta=\omega.}
+ \label{eq:l09-unicycle}
+\end{equation}
+Equivalently, with input $u=[v\;\omega]\trans$,
+\begin{equation}
+ \dot q=
+ \begin{bmatrix}\cos\theta&0\\\sin\theta&0\\0&1\end{bmatrix}u.
+ \label{eq:l09-matrix}
+\end{equation}
+The state has three components, while the input has two. A dot denotes a
+time derivative, so $\dot x$ and $\dot y$ have units of meters per second,
+and $\dot\theta$ has units of radians per second.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture09/projection}
+\caption{The forward velocity expressed in world coordinates. Its components
+are $v\cos\theta$ and $v\sin\theta$; a zero lateral velocity in the robot
+frame does not imply a zero world-frame $y$ velocity.}
+\end{figure}
+
+\subsection{The lateral-motion constraint}
+Projecting the world velocity onto the robot's left-pointing axis gives
+\begin{equation}
+ -\dot x\sin\theta+\dot y\cos\theta=0.
+ \label{eq:l09-constraint}
+\end{equation}
+This is a \emph{nonholonomic} constraint: it restricts instantaneous
+velocities and cannot be replaced by a constraint on pose alone. The robot
+can still reach a location to its side by turning and driving; it cannot
+translate directly sideways while holding its heading fixed.
+
+The choice of representative point matters. A point located a distance $a$
+ahead of the axle midpoint has robot-frame velocity $[v\;a\omega]\trans$.
+Thus the simple zero-lateral-velocity statement applies to the chosen axle
+midpoint, not to every point of a turning chassis.
+
+\subsection{What the abstraction includes}
+The unicycle equations are kinematic: they relate velocities to changes
+in pose. They do not predict the forces, torques, balance, or motor transients
+needed to achieve those velocities. They are useful when low-level control
+and traction make the commanded motion a reasonable approximation, or when
+measured velocities are used directly.
+
+Similar abstractions can be useful for planning the paths of more complex
+systems. Their admissible inputs must still reflect the actual platform.
+For example, a car-like vehicle generally cannot turn in place, even though
+an unconstrained unicycle model allows $v=0$ and $\omega\ne0$. A simplified
+path model also does not replace a balance model for a walking robot.
+
+\section{Odometry as integration of measured motion}
+\emph{Wheel odometry} estimates changes in pose from wheel rotation.
+Starting from an initial pose $q(t_0)$, the unicycle model implies
+\begin{align}
+ x(t)&=x(t_0)+\int_{t_0}^t v(\tau)\cos\theta(\tau)\,d\tau,\\
+ y(t)&=y(t_0)+\int_{t_0}^t v(\tau)\sin\theta(\tau)\,d\tau,\\
+ \theta(t)&=\theta(t_0)+\int_{t_0}^t\omega(\tau)\,d\tau.
+\end{align}
+This produces an estimate relative to the initial frame. Setting
+$q(t_0)=[0\;0\;0]\trans$ places that frame at the starting pose; it does
+not establish the robot's location in an independently defined building map.
+
+On a computer, measurements arrive at discrete times $t_k$. Write
+$h=t_{k+1}-t_k$ for the sampling interval and $q_k$ for the estimated pose
+at $t_k$. The index $k+1$ means the next sample, not necessarily one second
+later. If intervals vary, use their measured durations $h_k$.
+
+\subsection{Forward Euler integration}
+The derivative definition motivates the approximation
+\[
+ \dot x(t_k)\approx\frac{x(t_k+h)-x(t_k)}h.
+\]
+Using the velocity and heading at the beginning of the interval gives the
+\emph{forward Euler} update:
+\begin{equation}
+ \boxed{\begin{aligned}
+ x_{k+1}&=x_k+h v_k\cos\theta_k,\\
+ y_{k+1}&=y_k+h v_k\sin\theta_k,\\
+ \theta_{k+1}&=\theta_k+h\omega_k.
+ \end{aligned}}
+ \label{eq:l09-euler}
+\end{equation}
+Each new estimate becomes the starting point for the next step. All three
+right-hand sides use the old state: updating the heading first and then
+using that new heading for translation implements a different method.
+
+For a general model $\dot q=f(q,u)$, the same construction is
+\begin{equation}
+ q_{k+1}=q_k+h f(q_k,u_k).
+\end{equation}
+This is numerical integration of a differential equation. The issue is
+approximating motion over finite sampling intervals, not an inability of
+computers to manipulate derivatives or limits symbolically.
+
+\section{Which values belong in an integration step?}
+Over one interval, the exact displacement depends on the velocity throughout
+that interval. A numerical method specifies how the available information
+approximates that motion. Choosing values consistently matters; arbitrary
+mixtures of old and new variables need not have the intended accuracy.
+
+For translation, the quantities being integrated are $v\cos\theta$ and
+$v\sin\theta$. For heading, the integrand is $\omega$. The signed area
+between an integrand and its approximation is the error in its integral.
+A plot of heading alone does not directly give the error in position.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture09/quadrature}
+\caption{Approximating a scalar integrand $g(t)$ over one interval. Left
+and right endpoint values give rectangles; a straight line between endpoint
+values gives the trapezoidal rule. Its area equals the interval length times
+the mean of those endpoint values.}
+\label{fig:l09-quadrature}
+\end{figure}
+
+\subsection{Backward Euler}
+Backward Euler evaluates the derivative at the new state and endpoint input:
+\[
+ q_{k+1}=q_k+h f(q_{k+1},u_{k+1}).
+\]
+In general this is an implicit equation that must be solved. For the
+unicycle with externally supplied endpoint velocities, it can be evaluated
+in sequence:
+\begin{align*}
+ \theta_{k+1}&=\theta_k+h\omega_{k+1},\\
+ x_{k+1}&=x_k+h v_{k+1}\cos\theta_{k+1},\\
+ y_{k+1}&=y_k+h v_{k+1}\sin\theta_{k+1}.
+\end{align*}
+Measured endpoint inputs are available only after that endpoint is reached.
+This timing is compatible with reconstructing past motion, but it must not
+be confused with predicting future motion from measurements not yet available.
+
+\subsection{Trapezoidal integration}
+The trapezoidal method averages the two endpoint \emph{derivatives}:
+\[
+ q_{k+1}=q_k+\frac h2
+ \bigl[f(q_k,u_k)+f(q_{k+1},u_{k+1})\bigr].
+\]
+For the unicycle with known endpoint inputs, first compute
+$\theta_{k+1}=\theta_k+\tfrac h2(\omega_k+\omega_{k+1})$, then use
+\begin{align*}
+ x_{k+1}&=x_k+\frac h2
+  \bigl[v_k\cos\theta_k+v_{k+1}\cos\theta_{k+1}\bigr],\\
+ y_{k+1}&=y_k+\frac h2
+  \bigl[v_k\sin\theta_k+v_{k+1}\sin\theta_{k+1}\bigr].
+\end{align*}
+In particular,
+\[
+ \frac{v_k\cos\theta_k+v_{k+1}\cos\theta_{k+1}}2
+ \ne
+ \frac{v_k+v_{k+1}}2\cos\!\left(\frac{\theta_k+\theta_{k+1}}2\right)
+\]
+in general. Averaging the variables separately is a different approximation
+because the velocity model is nonlinear in heading.
+
+\subsection{Runge--Kutta methods}
+Runge--Kutta denotes a family of methods with specified intermediate
+derivative evaluations, rather than any operation that takes an average.
+For example, the explicit second-order method known as Heun's method uses
+an Euler prediction followed by an average of slopes:
+\begin{align*}
+ a_1&=f(q_k,u_k),&\widetilde q_{k+1}&=q_k+h a_1,\\
+ a_2&=f(\widetilde q_{k+1},u_{k+1}),&
+ q_{k+1}&=q_k+\frac h2(a_1+a_2).
+\end{align*}
+Here the second slope uses a \emph{predicted} endpoint state, whereas the
+implicit trapezoidal method uses the final endpoint state. Inputs at the
+required evaluation times must be supplied or approximated consistently.
+Detailed solver design is beyond the present scope.\footnote{For the
+standard Euler, Heun, and implicit trapezoidal formulas, see
+\href{https://www.d.umn.edu/~mhampton/NA/ODEInt/}{Marshall Hampton's notes on numerical differential equations}.}
+
+Both forward and backward Euler are first-order integration methods. The
+trapezoidal and Heun methods are second order for sufficiently smooth
+problems under the usual convergence assumptions. This refers to error
+over a fixed time span as the step size decreases. A piecewise constant
+approximation to an integrand should not be confused with calling Euler
+a ``zeroth-order integration method.''
+
+\subsection{Worked example: one interval, different methods}
+Let $q_0=[0\;0\;0]\trans$, $h=1\,\mathrm s$, and suppose measured
+endpoint velocities are
+\[
+ v_0=1\,\mathrm{m/s},\quad v_1=2\,\mathrm{m/s},\qquad
+ \omega_0=0\,\mathrm{rad/s},\quad\omega_1=0.5\,\mathrm{rad/s}.
+\]
+Forward Euler uses the beginning values, so
+$x_1=1$, $y_1=0$, and $\theta_1=0$. Backward Euler uses the endpoint
+values and gives $\theta_1=0.5$, $x_1=2\cos(0.5)$, and
+$y_1=2\sin(0.5)$. The trapezoidal heading is $\theta_1=0.25$, giving
+$x_1=\tfrac12[1+2\cos(0.25)]$ and $y_1=\sin(0.25)$.
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+Method & $x_1$ (m) & $y_1$ (m) & $\theta_1$ (rad)\\
+\midrule
+Forward Euler & 1.0000 & 0.0000 & 0.0000\\
+Backward Euler & 1.7552 & 0.9589 & 0.5000\\
+Trapezoidal & 1.4689 & 0.2474 & 0.2500\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The endpoint data alone do not uniquely determine the true trajectory
+between samples. These are three approximations, not three exact answers.
+If instead $u_0$ is explicitly held constant throughout the interval, the
+exact motion is straight travel by one meter; the value $u_1$ then begins
+the next interval. Distinguishing endpoint measurements from held commands
+is part of specifying the problem.
+
+\section{Sampling interval and missed motion}
+Reducing the interval can improve the approximation when the motion changes
+rapidly. Higher-order integration does not recover changes that were never
+captured by the measurements. Figure~\ref{fig:l09-sampling} shows how an
+apparently smooth interpolation can miss substantial variation.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture09/sampling}
+\caption{Sparse samples can miss motion between sampling instants.
+The solid curve represents a varying signal; the dashed line interpolates
+the displayed samples. A more sophisticated solver cannot infer the hidden
+peaks from these samples alone.}
+\label{fig:l09-sampling}
+\end{figure}
+
+The useful interval depends on speed, turning rate, sensor timing, and
+required accuracy. There is no universal sampling period for all ground
+robots or all flying robots. Shorter windows also contain fewer encoder
+counts and can make count-based speed estimates coarser, as discussed in
+Chapter~\ref{ch:motors}. Processing cost, measurement resolution, and delay
+must be considered together. Variable time steps are possible, provided
+the measurement timestamps and integration intervals remain consistent.
+
+\subsection{A constant-input benchmark}
+For constant $v$ and $\omega\ne0$ over an interval, the unicycle equations
+can be integrated exactly:
+\begin{align}
+ \theta_{k+1}&=\theta_k+h\omega,\\
+ x_{k+1}&=x_k+\frac v\omega
+       [\sin(\theta_k+h\omega)-\sin\theta_k],\\
+ y_{k+1}&=y_k-\frac v\omega
+       [\cos(\theta_k+h\omega)-\cos\theta_k].
+ \label{eq:l09-exact}
+\end{align}
+For $\omega=0$, the motion is straight:
+$x_{k+1}=x_k+hv\cos\theta_k$ and $y_{k+1}=y_k+hv\sin\theta_k$.
+This special case provides a useful check on numerical integration, not
+an exact model of arbitrary time-varying or slipping motion.
+
+Starting at zero pose with $v=0.2\,\mathrm{m/s}$,
+$\omega=0.5\,\mathrm{rad/s}$, and $h=1\,\mathrm s$, the exact endpoint is
+approximately $(0.19177\,\mathrm m,0.04897\,\mathrm m,0.5\,\mathrm{rad})$.
+A single forward Euler step gives $(0.2\,\mathrm m,0,0.5\,\mathrm{rad})$:
+it updates heading but approximates the whole translation using the initial
+direction. Smaller steps follow the curved path more closely.
+
+\section{From wheel counts to an odometry update}
+An encoder naturally measures rotation accumulated over an interval.
+For signed counts $\Delta n_R,\Delta n_L$, motor-side count resolutions
+$N_R,N_L$, and reductions $R_R,R_L$, the inferred wheel rotations are
+\[
+ \Delta\phi_R=\frac{2\pi\Delta n_R}{N_RR_R},\qquad
+ \Delta\phi_L=\frac{2\pi\Delta n_L}{N_LR_L}.
+\]
+For the equal-radius model, define
+\begin{equation}
+ \Delta s=\frac r2(\Delta\phi_R+\Delta\phi_L),\qquad
+ \Delta\theta=\frac r d(\Delta\phi_R-\Delta\phi_L).
+\end{equation}
+Then an Euler-style increment update is
+\[
+ x_{k+1}=x_k+\Delta s\cos\theta_k,\quad
+ y_{k+1}=y_k+\Delta s\sin\theta_k,\quad
+ \theta_{k+1}=\theta_k+\Delta\theta.
+\]
+The accumulated counts already describe the completed interval; they are
+not instantaneous measurements of velocity at its end. With a short
+interval, using $\theta_k+\Delta\theta/2$ for the translation direction
+often improves the turning approximation. Under constant $v,\omega$, this
+mid-heading approximation uses the arc length as a chord length; it is
+still approximate. Total wheel increments alone do not determine the
+translation exactly if the turning pattern varies within the interval.
+
+A practical implementation initializes the pose and encoder baselines,
+reads both count increments over matching intervals, converts counts to
+wheel motion, and updates the pose using one consistent integration rule.
+Retain the old pose until all components of the update have been computed.
+It is convenient to integrate heading without wrapping and wrap it only
+for display; directly averaging angles near $-\pi$ and $\pi$ can otherwise
+give a misleading direction.
+
+\clearpage
+\section{Why odometry drifts}
+Each update builds on the preceding estimate, so errors in motion and
+heading carry into later updates. Sources include encoder quantization,
+missed counts, incorrect wheel radii or separation, wheel slip, and numerical
+integration error. A heading error is especially consequential because it
+changes the direction used to project subsequent forward motion.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture09/drift}
+\caption{Illustrative actual and estimated trajectories starting from the
+same pose. Wheel odometry has no external position reference to pull the
+estimate back toward the actual path. Separation need not increase at
+every step, although uncertainty generally grows without correction.}
+\end{figure}
+
+Reducing the integration step addresses discretization error, but does not
+remove slip or calibration bias. Conversely, drift is not inevitable solely
+because integration is numerical: perfect motion information and an exact
+model would recover the relative trajectory. In practice, wheel odometry
+is useful over short intervals, while external observations such as satellite
+positioning or recognized landmarks can constrain accumulated error.
+Combining such information belongs to the broader problem of localization.
+
+\clearpage
+\section{Additional exercises}
+Assume equal wheel radii, no slip, counterclockwise positive heading, and
+positive wheel velocities for forward rolling. Use radians in computations.
+\begin{enumerate}
+\item \textbf{Wheel-to-body mapping.} Let $r=0.05\,\mathrm m$ and
+$d=0.30\,\mathrm m$. Find $(v,\omega)$ for wheel rates
+$(\omega_R,\omega_L)=(4,4),(4,-4),(6,2)$ in rad/s. Describe each motion
+and check the units of both results.
+
+\item \textbf{Inverse kinematics.} For the same robot, compute the wheel
+rates required for $v=0.15\,\mathrm{m/s}$ and $\omega=0.4\,\mathrm{rad/s}$.
+If each wheel is limited to $4\,\mathrm{rad/s}$ in magnitude, is the request
+feasible? Scale both body commands by a common factor to fit the limit.
+
+\item \textbf{World-frame velocity.} At heading $\theta=\pi/3$, the robot
+has $v=0.2\,\mathrm{m/s}$ and $\omega=-0.5\,\mathrm{rad/s}$.
+Compute $\dot q$ and verify Equation~\eqref{eq:l09-constraint}. Explain why
+the robot can have nonzero $\dot y$ without moving sideways in its own frame.
+
+\item \textbf{Two Euler steps.} Start at $q_0=[0\;0\;0]\trans$ with
+$h=0.5\,\mathrm s$. Apply $(v_0,\omega_0)=(0.2,1)$ over the first interval
+and $(v_1,\omega_1)=(0.2,0)$ over the second, in SI units. Compute $q_1,q_2$
+with forward Euler. Explain why updating heading before position changes
+the result.
+
+\item \textbf{Integration accuracy.} For constant $v=0.2\,\mathrm{m/s}$
+and $\omega=0.5\,\mathrm{rad/s}$, start at zero pose and integrate for one
+second using one Euler step and then ten steps. Compare both position
+estimates with Equation~\eqref{eq:l09-exact}. Which source of error is
+being reduced, and which real-world errors are absent from this comparison?
+
+\item \textbf{Encoder odometry.} Let $N_R=N_L=8$, $R_R=R_L=100$,
+$r=0.05\,\mathrm m$, and $d=0.30\,\mathrm m$. Over one interval, record
+40 right counts and 24 left counts. Find $\Delta\phi_R,\Delta\phi_L$,
+$\Delta s$, and $\Delta\theta$. Update an initial pose
+$(1\,\mathrm m,2\,\mathrm m,\pi/2)$ using the initial heading, then the
+mid-heading approximation.
+
+\item \textbf{Model and measurement limits.} Explain why decreasing the
+step size cannot recover a brief wheel slip from encoder data alone. Give
+an example of an external observation that could help correct pose drift.
+Why is the final pose not determined uniquely by just two endpoint samples
+of $v$ and $\omega$?
+\end{enumerate}

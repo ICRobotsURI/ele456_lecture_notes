@@ -1,0 +1,25 @@
+\begin{tikzpicture}[x=.85cm,y=.85cm]
+\foreach \x/\title/\mode in {0/Left endpoint/0,4.5/Right endpoint/1,9/Trapezoid/2} {
+ \begin{scope}[shift={(\x,0)}]
+ \ifnum\mode=0
+   \fill[robotframe!12] (.3,0) rectangle (2.8,.6);
+   \draw[robotframe,thick,dashed] (.3,.6)--(2.8,.6);
+ \fi
+ \ifnum\mode=1
+   \fill[sensorframe!12] (.3,0) rectangle (2.8,2.2);
+   \draw[sensorframe,thick,dashed] (.3,2.2)--(2.8,2.2);
+ \fi
+ \ifnum\mode=2
+   \fill[violet!12] (.3,0)--(.3,.6)--(2.8,2.2)--(2.8,0)--cycle;
+   \draw[violet,thick,dashed] (.3,.6)--(2.8,2.2);
+ \fi
+ \draw[axis] (0,0)--(3.3,0) node[right]{$t$};
+ \draw[axis] (0,0)--(0,2.7) node[above]{$g(t)$};
+ \draw[thick] (.3,.6) .. controls (1.3,.7) and (1.8,2.1) .. (2.8,2.2);
+ \draw[projection] (.3,0)--(.3,.6);\draw[projection] (2.8,0)--(2.8,2.2);
+ \fill (.3,.6) circle (.045);\fill (2.8,2.2) circle (.045);
+ \node[below] at (.3,0) {$t_k$};\node[below] at (2.8,0) {$t_{k+1}$};
+ \node at (1.5,-.85) {\title};
+ \end{scope}
+}
+\end{tikzpicture}

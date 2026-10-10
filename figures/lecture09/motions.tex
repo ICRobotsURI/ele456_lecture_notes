@@ -1,0 +1,21 @@
+\begin{tikzpicture}[x=.95cm,y=.8cm]
+\foreach \x/\title in {0/Straight,4/Turn in place,8/Curve left} {
+ \begin{scope}[shift={(\x,0)}]
+ \draw[thick] (-.7,0)--(.7,0);
+ \draw[fill=gray!25] (-.85,-.4) rectangle (-.55,.4);
+ \draw[fill=gray!25] (.55,-.4) rectangle (.85,.4);
+ \fill (0,0) circle (.045);
+ \node at (0,-1.3) {\title};
+ \node[below] at (-.7,-.4) {L};\node[below] at (.7,-.4) {R};
+ \end{scope}
+}
+\draw[axis,sensorframe] (-.7,.5)--(-.7,1.6);
+\draw[axis,sensorframe] (.7,.5)--(.7,1.6);
+\draw[axis,robotframe] (0,.2)--(0,2);
+\draw[axis,sensorframe] (3,.1)--(3,-.9);
+\draw[axis,sensorframe] (4.7,.5)--(4.7,1.5);
+\draw[axis,robotframe] (4.4,.5) arc (0:260:.4);
+\draw[axis,sensorframe] (7.3,.5)--(7.3,1);
+\draw[axis,sensorframe] (8.7,.5)--(8.7,1.8);
+\draw[axis,robotframe] (8,.2) .. controls (8,1.4) and (7.5,1.9) .. (7,2.1);
+\end{tikzpicture}

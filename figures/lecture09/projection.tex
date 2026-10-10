@@ -1,0 +1,16 @@
+\begin{tikzpicture}[scale=.9]
+\draw[axis] (0,0)--(7,0) node[right]{$x_W$};
+\draw[axis] (0,0)--(0,4.5) node[above]{$y_W$};
+\coordinate (P) at (2,1.2);
+\coordinate (V) at (5.5,3.5);
+\draw[projection] (0,1.2)--(P)--(2,0);
+\fill (P) circle (.05) node[below left]{$P$};
+\draw[axis,sensorframe,very thick] (P)--node[above,sloped]{$v$}(V);
+\draw[axis,robotframe] (P)--(.95,2.8) node[above]{$y_R$};
+\node[right] at (V) {$x_R$};
+\draw[projection] (V)--(5.5,1.2);
+\draw[axis] (P)--node[below]{$v\cos\theta$}(5.5,1.2);
+\draw[axis] (5.9,1.2)--node[right]{$v\sin\theta$}(5.9,3.5);
+\draw (3,1.2) arc (0:33.3:1);
+\node at (3.3,1.52) {$\theta$};
+\end{tikzpicture}
