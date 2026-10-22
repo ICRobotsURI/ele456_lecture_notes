@@ -43,7 +43,7 @@ homogeneous transformations, inversion, numerical rounding, and pose, with
 a vector diagram and seven exercises.
 Chapter 6, "Robot systems and sensing," introduces sensing, actuation,
 processing, and the robot--environment feedback loop using the end of lecture
-05. Lecture 06 extends it with sensor classification, ADC conversion, bias,
+05. Lecture 06 extends it with sensor classification, ADC conversion, gain, bias,
 noise and calibration, ultrasound, infrared reflection, and planar laser
 scanning. Five vector diagrams and seven exercises support the chapter,
 including scan indexing and transformations from sensor to robot coordinates.
@@ -59,6 +59,17 @@ Chapter 9, "Differential-drive kinematics and odometry," combines two deliveries
 of the October 8 lecture. It develops wheel/body velocity mappings, the unicycle
 model, numerical integration, encoder updates, and odometry drift, with six
 vector figures, worked examples, and seven exercises.
+Chapter 10, "Robotic arms and direct kinematics," introduces links, revolute
+and prismatic joints, configuration variables, transform chains, and direct
+versus inverse kinematics. Lecture 11 extends it with the standard
+Denavit--Hartenberg convention, common normals, signed parameter definitions,
+the intermediate-frame derivation, and a procedure for building the forward
+map. Five vector figures, planar RR and DH worked examples, and fourteen
+exercises develop the geometry and its matrix representation.
+
+For correspondence with the classes, lecture 10 covers Sections 10.1--10.6;
+lecture 11 covers Sections 10.7--10.10. Section 10.11 groups the exercises
+into arm kinematics/workspace and DH frames/transformations.
 Appendix A collects the rotation-conversion reference formulas, including
 scalar-first unit quaternions and singular-case notes.
 
@@ -89,6 +100,8 @@ On Overleaf, upload the project and select `main.tex` as the main document.
 - `chapters/lecture07.tex`: Chapter 7, cameras and perspective projection.
 - `chapters/lecture08.tex`: Chapter 8, motors, transmissions, and speed control.
 - `chapters/lecture09.tex`: Chapter 9, differential-drive kinematics and odometry.
+- `chapters/lecture10.tex`: Chapter 10, robotic arms and direct kinematics.
+- `chapters/lecture10-dh.tex`: DH sections of Chapter 10, sourced from lecture 11.
 - `appendices/rotation-conversions.tex`: conversion reference adapted from the supplied handout.
 - `figures/lecture02/`: vector diagrams drawn in TikZ and included by the chapter.
 - `figures/lecture03/`: diagrams for affine and homogeneous transformations.
@@ -98,13 +111,14 @@ On Overleaf, upload the project and select `main.tex` as the main document.
 - `figures/lecture07/`: grayscale, Bayer sampling, pinhole, image-coordinate, and viewing-ray diagrams.
 - `figures/lecture08/`: actuation chain, PWM, cylinder, transmission, and encoder diagrams.
 - `figures/lecture09/`: drive geometry, motion cases, velocity projection, integration, sampling, and drift diagrams.
+- `figures/lecture10/`: joint symbols, serial-chain topology, planar RR geometry, workspace, and DH frame geometry.
 - `chapters/lecture-template.tex`: starting point for future lectures.
 - `lectures/`: original boards and transcripts (local only, excluded from Git).
 - `editorial-notes.md`: source decisions and details requiring confirmation.
 
 ## Add a lecture
 
-1. Put the next board material and transcript in `lectures/10/`, then `11/`, etc.
+1. Put the next board material and transcript in `lectures/12/`, then `13/`, etc.
 2. Assign each topic to the appropriate chapter, extending an existing chapter
    when a class continues that topic. Record the source mapping in `editorial-notes.md`.
 3. Extend the appropriate chapter when a topic continues. For new

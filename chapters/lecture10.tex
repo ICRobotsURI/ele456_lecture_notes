@@ -1,0 +1,431 @@
+\chapter{Robotic arms and direct kinematics}
+\label{chap:lecture10}
+
+A mobile robot can often be modeled as one rigid body moving through the
+world. A robotic arm instead consists of several rigid bodies whose relative
+poses change at joints. Its configuration must describe those internal
+motions as well as the resulting position and orientation of its tool.
+The coordinate transformations developed earlier provide a systematic way
+to connect joint variables to tool pose.
+
+\section{Links, joints, and the end effector}
+The individual rigid bodies of a manipulator are called \emph{links}.
+\emph{Joints} connect adjacent links and constrain their relative motion.
+A sequence of links and joints forms a \emph{kinematic chain}. Here we
+consider a serial, open chain with a fixed base: there is one path from
+the base to the terminal link, with no closed loops.
+
+Number the base as link 0 and the moving links as $1,\ldots,n$.
+Joint $i$ connects link $i-1$ to link $i$. The terminal tool is the
+\emph{end effector}: it may be a gripper, welding tool, drill, or another
+device selected for the task. A tool rigidly attached to the last link is
+part of that link for the arm's kinematic model. Additional tool motions,
+such as opening gripper fingers, require extra coordinates if they are
+included in the model.
+
+\subsection{Revolute and prismatic joints}
+Two common one-degree-of-freedom joints are:
+\begin{itemize}
+\item A \emph{revolute} or rotational joint, denoted R, permits relative
+rotation about an axis. Its joint variable is an angle, typically measured
+in radians.
+\item A \emph{prismatic} joint, denoted P, permits relative translation
+along an axis. Its joint variable is a displacement, typically measured
+in meters.
+\end{itemize}
+These names describe the joints, not the rigid links themselves. In a
+schematic, a cylinder can indicate a revolute joint with its axis along
+the cylinder's length. A sliding block can indicate a prismatic joint,
+but its translation direction must also be shown.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture10/joints}
+\caption{Symbols for one-degree-of-freedom joints. The revolute coordinate
+measures relative rotation; the prismatic coordinate measures relative
+translation. Joint zero positions and positive directions are part of the
+model definition.}
+\label{fig:l10-joints}
+\end{figure}
+
+A chain described as RRRRP has four revolute joints followed by one
+prismatic joint. This sequence alone does not determine its geometry:
+the axes' positions and directions, the distances between joints, and
+the tool attachment are also needed. Two joint axes that appear parallel
+in one configuration need not remain parallel when an intervening joint
+rotates.
+
+\section{Joint variables and degrees of freedom}
+An unconstrained rigid body in space has six degrees of freedom: three
+for translation and three for orientation. Five independent free bodies
+would therefore have 30 degrees of freedom. Connecting those bodies into
+a fixed-base serial chain changes the count because the joints constrain
+their relative motion.
+
+For an open chain of $n$ independent one-degree-of-freedom joints, its
+configuration can be specified by
+\begin{equation}
+ q=\begin{bmatrix}q_1&q_2&\cdots&q_n\end{bmatrix}\trans.
+ \label{eq:l10-q}
+\end{equation}
+Thus the RRRRP chain has five configuration degrees of freedom. Its first
+four coordinates are angles and its last coordinate is a displacement.
+The components of a joint vector need not all have the same units.
+
+This count assumes the stated open-chain structure and independent joints.
+Couplings, closed loops, a moving base, or multi-degree-of-freedom joints
+require a different count. Joint limits restrict the allowable range of
+each coordinate. An angle may be periodic for a freely rotating joint,
+but a physical joint need not allow unlimited rotation.
+
+In a purely kinematic description, $q$ is often called the state. For a
+dynamic model that predicts motion from torques or forces, position alone
+is generally insufficient; joint velocities are also needed.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture10/chain}
+\caption{Topology of a five-joint RRRRP chain. Joint $i$ connects links
+$i-1$ and $i$. The drawing identifies connectivity and coordinate dependence;
+it does not prescribe the spatial directions of the joint axes.}
+\label{fig:l10-chain}
+\end{figure}
+
+\section{Direct and inverse kinematics}
+Attach a frame to the end effector and denote it by EE. The
+\emph{direct kinematics}, also called \emph{forward kinematics}, maps the
+joint configuration to the end-effector pose:
+\begin{equation}
+ q\longmapsto H_{\mathrm{EE}}^W(q)
+ =\begin{bmatrix}
+ R_{\mathrm{EE}}^W(q)&p_{\mathrm{EE}}^W(q)\\
+ 0\;0\;0&1
+ \end{bmatrix}.
+ \label{eq:l10-direct}
+\end{equation}
+The joint coordinates might be measured by encoders. The result states
+where the tool is and how it is oriented in the world frame.
+
+Using roll, pitch, and yaw to describe orientation, one can also express
+the output locally as six scalar functions:
+\[
+ \begin{bmatrix}x_{\mathrm{EE}}^W\\y_{\mathrm{EE}}^W\\z_{\mathrm{EE}}^W\\
+ \varphi_{\mathrm{EE}}^W\\\theta_{\mathrm{EE}}^W\\\psi_{\mathrm{EE}}^W
+ \end{bmatrix}
+ =\begin{bmatrix}f_1(q)\\f_2(q)\\f_3(q)\\f_4(q)\\f_5(q)\\f_6(q)\end{bmatrix}.
+\]
+The homogeneous matrix is often the more convenient output because it
+avoids choosing among multiple angle representations. For a specified
+rigid serial-chain geometry and a given admissible $q$, the physical tool
+pose is unique. Different roll--pitch--yaw triples can nevertheless represent
+the same orientation, and angle extraction has singular cases.
+
+\subsection{The inverse question}
+Suppose a sensor detects an object and its pose has been expressed in the
+world frame. To grasp it, the robot needs joint coordinates that place its
+tool at a desired pose. This is \emph{inverse kinematics}:
+\begin{equation}
+ \text{given }H_{\mathrm{EE},d}^W,\qquad
+ \text{find }q\text{ such that }H_{\mathrm{EE}}^W(q)=H_{\mathrm{EE},d}^W.
+ \label{eq:l10-inverse}
+\end{equation}
+The desired tool frame may have a known offset from the object frame;
+their origins and axes do not have to coincide for a grasp to be correct.
+
+Forward kinematics evaluates a function. Inverse kinematics solves
+equations, usually nonlinear ones. Depending on the geometry, target,
+and constraints, there may be no solution, one solution, several isolated
+solutions, or infinitely many solutions. A general closed-form inverse
+need not be available, even when the forward model is explicit.
+
+The inverse-kinematics problem is not the same as inverting a homogeneous
+matrix. $(H_{\mathrm{EE}}^W)^{-1}$ expresses the world frame relative to
+the end effector for an already known pose; it does not recover the joint
+coordinates that produce that pose.
+
+\section{Building direct kinematics from local transformations}
+Place a frame $i$ rigidly on each link $i$. For now, take the base frame 0
+to coincide with the world frame. The essential observation is that the
+relative pose of adjacent link frames depends only on their connecting
+joint coordinate and the fixed geometry:
+\begin{equation}
+ H_i^{i-1}=H_i^{i-1}(q_i).
+ \label{eq:l10-local}
+\end{equation}
+For example, if joint 2 remains fixed while joint 1 moves, links 1 and 2
+move together. Their world poses change, but $H_2^1$ does not. Moving a
+joint farther along the chain likewise does not alter the relative pose
+of links 1 and 2. Moving joint 2 itself does change $H_2^1$.
+
+The local transformations compose in the same order as the coordinate
+transformations studied earlier:
+\begin{equation}
+ \boxed{H_n^0(q)=H_1^0(q_1)H_2^1(q_2)\cdots H_n^{n-1}(q_n).}
+ \label{eq:l10-product}
+\end{equation}
+For the five-joint chain,
+\[
+ H_5^0=H_1^0H_2^1H_3^2H_4^3H_5^4
+ =\begin{bmatrix}R_5^0&p_5^0\\0\;0\;0&1\end{bmatrix}.
+\]
+Each factor maps coordinates from its subscript frame to its superscript
+frame. Applied to a point in frame 5, the rightmost factor acts first.
+The matching intermediate frame labels help verify the order; in general
+the factors cannot be reordered.
+
+The same idea also gives the pose of an intermediate link:
+$H_i^0=H_1^0\cdots H_i^{i-1}$. This world-relative pose depends on the
+preceding joint coordinates, even though each adjacent-frame factor
+depends on only one coordinate.
+
+\subsection{Base and tool offsets}
+If the base does not coincide with the world frame, include its mounting
+transform. If the tool frame does not coincide with frame $n$, include the
+tool attachment transform:
+\begin{equation}
+ H_{\mathrm{EE}}^W
+ =H_0^W\left(H_1^0\cdots H_n^{n-1}\right)H_{\mathrm{EE}}^n.
+ \label{eq:l10-offsets}
+\end{equation}
+For a fixed base and a rigidly mounted tool, the outer two factors are
+constant. Thus the full problem separates into local joint transformations
+and fixed geometric offsets.
+
+The remaining task is to choose frames and construct each local matrix
+systematically. Standard frame-assignment conventions make that process
+repeatable. Before introducing such a convention, a planar arm provides
+a case simple enough to derive directly from geometry.
+
+\section{A planar two-link manipulator}
+Consider two revolute joints and two links of lengths $\ell_1,\ell_2>0$,
+moving in the world $xy$ plane. The first joint is at the world origin.
+Let $q_1$ be the first link's angle from $x_W$, and let $q_2$ be the second
+link's angle \emph{relative to the first link}. Both angles are positive
+counterclockwise.
+
+Place the end-effector frame 2 at the tip, with $x_2$ along the second link
+and $y_2$ perpendicular to it in the plane. The second link's world
+orientation is $q_1+q_2$, not $q_2$ alone.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture10/planar}
+\caption{A planar RR arm. The second joint angle is measured from the
+extension of the first link. Dashed projections separate the two link
+contributions to the end-effector position.}
+\label{fig:l10-planar}
+\end{figure}
+
+Adding the two link vectors gives
+\begin{equation}
+ \boxed{\begin{aligned}
+ x_2^W&=\ell_1\cos q_1+\ell_2\cos(q_1+q_2),\\
+ y_2^W&=\ell_1\sin q_1+\ell_2\sin(q_1+q_2),\\
+ \psi_2^W&=q_1+q_2.
+ \end{aligned}}
+ \label{eq:l10-planar}
+\end{equation}
+With the frame axes chosen as stated, $z_2^W=0$ and roll and pitch can
+both be taken as zero. The yaw is understood modulo $2\pi$ when it
+represents orientation rather than accumulated joint rotation.
+
+\subsection{Recovering the same result by matrix multiplication}
+Place frame 1 at the elbow, rigidly attached to link 1, with $x_1$ along
+that link. In planar homogeneous coordinates,
+\begin{align}
+ H_1^0(q_1)&=\begin{bmatrix}
+ \cos q_1&-\sin q_1&\ell_1\cos q_1\\
+ \sin q_1&\cos q_1&\ell_1\sin q_1\\0&0&1
+ \end{bmatrix},\\
+ H_2^1(q_2)&=\begin{bmatrix}
+ \cos q_2&-\sin q_2&\ell_2\cos q_2\\
+ \sin q_2&\cos q_2&\ell_2\sin q_2\\0&0&1
+ \end{bmatrix}.
+\end{align}
+Multiplying them produces
+\begin{equation}
+ H_2^0=\begin{bmatrix}
+ \cos(q_1+q_2)&-\sin(q_1+q_2)&x_2^W\\
+ \sin(q_1+q_2)&\cos(q_1+q_2)&y_2^W\\
+ 0&0&1
+ \end{bmatrix},
+ \label{eq:l10-planarmatrix}
+\end{equation}
+where the translation entries agree with Equation~\eqref{eq:l10-planar}.
+These are $3\times3$ planar transformations. The corresponding spatial
+matrix is $4\times4$, with a $z$ rotation, zero $z$ translation, and the
+usual homogeneous last row.
+
+\subsection{Worked example}
+Let $\ell_1=1\,\mathrm m$, $\ell_2=0.5\,\mathrm m$,
+$q_1=\pi/6$, and $q_2=\pi/3$. The second link is vertical because
+$q_1+q_2=\pi/2$. Therefore
+\[
+ x_2^W=\frac{\sqrt3}{2}\,\mathrm m,\qquad
+ y_2^W=\left(\frac12+\frac12\right)\mathrm m=1\,\mathrm m,
+ \qquad\psi_2^W=\frac\pi2.
+\]
+The planar pose matrix is
+\[
+ H_2^0=\begin{bmatrix}0&-1&\sqrt3/2\\1&0&1\\0&0&1\end{bmatrix}.
+\]
+The matrix and geometric constructions describe the same tool pose.
+
+\section{Task dimension, reachability, and redundancy}
+The planar RR arm has two independent joint coordinates. A full planar
+tool pose has three components $(x,y,\psi)$, so the arm cannot generally
+set all three independently. Specifying a reachable position can determine
+one or more joint configurations, each with an associated orientation;
+there is not generally a freely selectable yaw left over.
+
+This is a limitation relative to the chosen task. If both joints have
+independent actuators, the arm is \emph{fully actuated in joint space}.
+Having too few configuration degrees of freedom for an arbitrary task
+pose is different from \emph{underactuation}, which concerns having fewer
+independent actuation inputs than configuration degrees of freedom.
+
+A planar three-revolute-joint chain can generally control a full planar
+pose locally away from singular configurations. A planar chain with more
+than three independent joints is typically \emph{kinematically redundant}
+for that task: different joint configurations can produce the same tool
+pose. This extra freedom can allow internal motion while the tool remains
+fixed, subject to joint limits, collisions, and the particular configuration.
+For a position-only task, even a three-joint planar arm can be redundant.
+Redundancy is therefore defined relative to the task, not by counting
+motors alone.\footnote{For terminology and inverse-kinematics context, see
+Lynch and Park, \href{https://modernrobotics.northwestern.edu/nu-gm-book-resource/inverse-kinematics-of-open-chains/}{Modern Robotics, Chapter 6}.}
+
+Counting degrees of freedom is a useful first check, but is not a guarantee
+that a target can be reached. Geometry, joint limits, and singular
+configurations still matter even when the number of joints matches the
+number of task coordinates.
+
+\subsection{Position workspace of the two-link arm}
+With unrestricted revolute joints and no collision constraints, the
+distance $\rho$ of the tip from the base satisfies
+\begin{equation}
+ |\ell_1-\ell_2|\le\rho\le\ell_1+\ell_2,
+ \qquad\rho=\sqrt{(x_2^W)^2+(y_2^W)^2}.
+ \label{eq:l10-workspace}
+\end{equation}
+The outer radius occurs when the links are aligned in the same direction;
+the inner radius occurs when they fold back against one another. Rotating
+the first joint sweeps these distances around the base, producing an
+annular position workspace, or a disk when the link lengths are equal.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture10/workspace}
+\caption{Left: the position workspace for unequal link lengths, neglecting
+joint limits and collisions. Right: two equal-length RR configurations
+reach the same point but have different end-effector orientations.}
+\label{fig:l10-workspace}
+\end{figure}
+
+For $\ell_1=1\,\mathrm m$ and $\ell_2=0.5\,\mathrm m$, a point 2 m
+from the base is too far away, and a point 0.2 m from the base is too close.
+Neither has a position inverse-kinematics solution. A point inside the
+annulus may be position-reachable while a prescribed orientation at that
+point remains impossible.
+
+\subsection{Same position, different joint configurations}
+For equal link lengths $\ell_1=\ell_2=1\,\mathrm m$, consider the target
+position $(1,1)\,\mathrm m$. Both
+\[
+ (q_1,q_2)=(0,\pi/2)\qquad\text{and}\qquad
+ (q_1,q_2)=(\pi/2,-\pi/2)
+\]
+reach it. The first gives yaw $\pi/2$, while the second gives yaw 0.
+Thus these are two solutions to the \emph{position-only} task, not two
+solutions to the same full-pose task. Requiring yaw $\pi/4$ at this point
+would reject both configurations and is not attainable by this ideal RR
+arm. The target specification determines which inverse problem is being
+asked.
+
+The central tool for further analysis is the forward map: establish the
+geometry, define the frames and joint coordinates, construct the local
+transformations, and multiply them in the correct order. Workspace and
+inverse-kinematics questions can then be posed against a precise model.
+
+\input{chapters/lecture10-dh}
+
+\clearpage
+\section{Additional exercises}
+\subsection{Arm kinematics and workspace}
+Assume ideal rigid links, independent joints, and no joint limits or
+collisions unless stated otherwise.
+\begin{enumerate}
+\item \textbf{Joint descriptions.} An RPR arm has a fixed base. State its
+number of configuration degrees of freedom, which links each joint connects,
+and the units of each component of $q$. Explain why the letters RPR alone
+are insufficient to compute the tool pose.
+
+\item \textbf{Local versus world pose.} In a five-joint serial arm, hold
+$q_2$ fixed and change $q_1$. Which of $H_2^1$ and $H_2^0$ can change?
+Repeat the question when only $q_4$ changes. Explain your answers physically.
+
+\item \textbf{Transform composition.} Write $H_{\mathrm{EE}}^W$ for a
+three-joint arm with a nonidentity base transform $H_0^W$ and a fixed tool
+transform $H_{\mathrm{EE}}^3$. State the mapping direction of each factor
+and explain why inverting the result does not solve inverse kinematics.
+
+\item \textbf{Planar direct kinematics.} Let $\ell_1=1\,\mathrm m$,
+$\ell_2=0.5\,\mathrm m$, $q_1=\pi/2$, and $q_2=-\pi/2$. Compute the
+tip position, yaw, and planar homogeneous matrix. Verify the result by
+multiplying $H_1^0H_2^1$.
+
+\item \textbf{Workspace and orientation.} For the same link lengths,
+decide whether positions $(2,0)$, $(0.2,0)$, and $(1,0)$ in meters are
+reachable. If the tip is at $(1.5,0)$, can its yaw be $\pi/2$? Explain
+using the fully extended configuration.
+
+\item \textbf{Two inverse solutions.} For $\ell_1=\ell_2=1\,\mathrm m$,
+substitute $(q_1,q_2)=(0,\pi/2)$ and $(\pi/2,-\pi/2)$ into the forward
+equations. Compare their positions and orientations. Which solution meets
+the full target pose $(x,y,\psi)=(1,1,0)$?
+
+\item \textbf{Task-dependent redundancy.} Compare planar arms with two,
+three, and six independent revolute joints for a position-only task and
+for a full planar-pose task. Assume generic nonsingular configurations.
+Explain why an arm with two independently driven joints is not necessarily
+underactuated, even though it cannot set an arbitrary planar tool pose.
+\end{enumerate}
+
+\clearpage
+\subsection{DH frames and transformations}
+\begin{enumerate}
+\item \textbf{Indices and frame counts.} A fixed-base arm has five
+one-degree-of-freedom joints. How many link frames, physical joint axes,
+common normals between consecutive physical axes, and DH table rows are
+needed? Which joint acts about or along $z_2$? Explain why $z_5$ does not
+imply a sixth joint.
+
+\item \textbf{Signed displacements.} A DH construction has
+$\overrightarrow{O_{i-1}O_i}=-0.2\hat z_{i-1}+0.5\hat x_i$ in meters.
+Find $d_i$, $a_i$, and the distance between the origins. Explain why the
+negative value is compatible with a valid frame assignment.
+
+\item \textbf{Deriving the local matrix.} Multiply
+Equations~\eqref{eq:l10-dh-z} and~\eqref{eq:l10-dh-x} explicitly.
+Explain why the translation column contains $a_i\cos\theta_i$ and
+$a_i\sin\theta_i$, even though the second factor translates only along
+its own $x$ axis.
+
+\item \textbf{A revolute DH row.} Let $a_i=0.2\,\mathrm m$,
+$d_i=0.1\,\mathrm m$, $\alpha_i=-\pi/2$, and
+$\theta_i=q_i+\pi/2$. Compute $H_i^{i-1}$ at $q_i=0$.
+Read the origin and all three axis directions from your answer, and
+verify that the rotation is right-handed.
+
+\item \textbf{A prismatic DH row.} Let $a_i=0.3\,\mathrm m$,
+$\alpha_i=0$, $\theta_i=\pi/2$, and $d_i=q_i+0.1\,\mathrm m$.
+Compute $H_i^{i-1}$ for $q_i=0.2\,\mathrm m$ and $0.4\,\mathrm m$.
+Which entries change? Express the displacement between these configurations
+in frame $i-1$.
+
+\item \textbf{Recovering the planar arm.} Build a two-row DH table for
+the planar RR arm using the parameter choices at the end of
+Section~\ref{sec:l10-dh-procedure}. Multiply the spatial matrices and
+recover Equation~\eqref{eq:l10-planar}. Identify the final $z$ direction.
+
+\item \textbf{Consistency of conventions.} Explain why reversing a
+chosen joint-axis direction while leaving every parameter and encoder
+sign unchanged generally changes the predicted motion. Why can two
+different DH tables nevertheless model the same physical arm?
+\end{enumerate}

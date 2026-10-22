@@ -1,0 +1,18 @@
+\begin{tikzpicture}
+\draw[very thick,gray] (0,-1)--(0,-.5);
+\draw[fill=gray!15] (-.45,-.5)--(-.45,.65) arc (180:360:.45 and .16)--(.45,-.5);
+\draw (-.45,-.5) arc (180:360:.45 and .16);
+\draw[fill=gray!15] (0,.65) ellipse (.45 and .16);
+\draw[very thick,gray] (0,.8)--(0,1.4)--(1.5,1.4);
+\draw[projection] (0,-1.15)--(0,1.8);
+\draw[axis,robotframe] (.65,-.3) arc (0:280:.65 and .25);
+\node[robotframe,right] at (.75,-.2) {$q_i$};
+\node at (.5,-1.7) {Revolute (R)};
+\begin{scope}[shift={(6,0)}]
+\draw[very thick,gray] (-1.5,0)--(1.7,0);
+\draw[fill=gray!15] (-.6,-.35) rectangle (.6,.35);
+\draw[very thick,gray] (0,.35)--(0,1.4)--(1.5,1.4);
+\draw[<->,thick,sensorframe] (-.8,-.85)--node[below]{$q_i$}(.8,-.85);
+\node at (.2,-1.7) {Prismatic (P)};
+\end{scope}
+\end{tikzpicture}

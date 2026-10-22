@@ -150,59 +150,85 @@ measurement process can all contribute to the difference between $F$ and
 $\bar F$. Increasing the number of digital bits alone does not eliminate
 all of these errors.
 
-\section{Bias, noise, and calibration}
-Within a useful operating interval, a simple measurement model is
+\section{Gain, bias, noise, and calibration}
+Within a useful operating interval, an affine measurement model is
 \begin{equation}
- \bar F_k=F_k+b+\nu_k,
+ \bar F_k=aF_k+b+\nu_k,
  \label{eq:l06-noise}
 \end{equation}
-where $b$ is a constant bias and $\nu_k$ is the noise in sample $k$.
-This model assumes the scale factor has already been set correctly.
-The ideal measurement has $b=0$ and $\nu_k=0$. A bias of $0.5\,\mathrm N$
-shifts every measurement upward by $0.5\,\mathrm N$; noise causes readings
-to vary even when the applied force is held fixed.
+where $a$ is the gain or scale factor, $b$ is a constant offset (bias), and
+$\nu_k$ is the noise in sample $k$. Here $F$ and $\bar F$ are both expressed
+in newtons, so $a$ is dimensionless and $b,\nu_k$ have units of newtons.
+The ideal response has $a=1$, $b=0$, and $\nu_k=0$.
+
+Gain changes the slope of the input--output relationship, while offset
+shifts its intercept. A sensor with $a=1.1$ and $b=0$ reads zero correctly
+but reports $11\,\mathrm N$ for an actual force of $10\,\mathrm N$.
+Subtracting a zero-load reading cannot correct that gain error. Noise adds
+sample-to-sample variation even at a fixed input.
 
 \begin{figure}[htbp]
 \centering\input{figures/lecture06/errors}
-\caption{A constant bias shifts the ideal input--output relationship.
-After bias correction, individual samples can still fluctuate about the
-true value. The time trace is schematic, not experimental data.}
+\caption{Left: gain changes the slope and offset changes the intercept of
+ the mean response. Axis scales differ, so the ideal unit-gain line need
+ not appear at $45^\circ$. Right: even with exact gain and offset correction,
+ samples fluctuate around the reference force. Both plots are schematic.}
 \label{fig:l06-errors}
 \end{figure}
 
-\subsection{Estimating a constant offset}
-Calibration compares measurements with known reference inputs. Suppose a
-constant reference force $F_0$ is applied and $M$ samples are collected.
-Under the constant-bias model with zero-mean noise, an estimate is
+\subsection{Estimating gain and offset}
+Calibration compares sensor readings with known reference inputs. Apply
+at least two distinct forces $F_A$ and $F_B$, and collect repeated readings
+at each. Let $m_A$ and $m_B$ denote the respective sample means. Assuming
+constant gain and offset and zero-mean noise, the two-point estimates are
 \begin{equation}
- \widehat b=\frac1M\sum_{k=1}^M\bar F_k-F_0,
- \qquad F_{\mathrm{corr}}=\bar F-\widehat b.
+ \widehat a=\frac{m_B-m_A}{F_B-F_A},\qquad
+ \widehat b=m_A-\widehat a F_A,\qquad
+ F_{\mathrm{corr}}=\frac{\bar F-\widehat b}{\widehat a}.
  \label{eq:l06-calibration}
 \end{equation}
-For this model, averaging is also the least-squares estimate of the constant
-offset. It is not a universal calibration procedure for every sensor.
+The correction requires a nonzero estimated gain. Repeated samples at only
+one reference force estimate $aF_A+b$; they cannot identify two unknown
+parameters separately. With more reference levels, fitting a line by
+least squares uses all the calibration data and helps reveal deviations
+from an affine response.
 
-For $F_0=5\,\mathrm N$ and readings $4.93$, $4.95$, and
-$4.91\,\mathrm N$, the mean is $4.93\,\mathrm N$, so
+For example, suppose mean readings at $F_A=0\,\mathrm N$ and
+$F_B=10\,\mathrm N$ are $m_A=0.2\,\mathrm N$ and $m_B=11.2\,\mathrm N$.
+Then
 \[
- \widehat b=-0.07\,\mathrm N.
+ \widehat a=\frac{11.2-0.2}{10-0}=1.1,\qquad
+ \widehat b=0.2\,\mathrm N.
 \]
-Subtracting this bias means adding $0.07\,\mathrm N$ to a measurement.
-The corrected samples are $5.00$, $5.02$, and $4.98\,\mathrm N$:
-their mean agrees with the reference, but the individual values still vary.
-One sample alone cannot distinguish its random error from a constant offset.
+A later reading of $5.7\,\mathrm N$ is corrected to
+\[
+ F_{\mathrm{corr}}=\frac{5.7-0.2}{1.1}\,\mathrm N=5\,\mathrm N.
+\]
+Subtracting the offset alone would give $5.5\,\mathrm N$ and leave the
+scale error uncorrected.
+
+If the gain is already known to be one, calibration reduces to estimating
+an offset using a known reference $F_0$:
+\[
+ \widehat b=\frac{1}{M}\sum_{k=1}^M\bar F_k-F_0.
+\]
+This is a useful special case, rather than the general
+calibration procedure.
 
 For independent noise samples with equal variance $\sigma^2$, the variance
-of their mean is $\sigma^2/M$. Thus averaging reduces uncertainty in the
-offset estimate under those assumptions. Correlation or drift can make
-averaging less effective, and calibration does not remove future noise.
+of a sample mean is $\sigma^2/M$. Averaging therefore reduces uncertainty
+in the reference readings under those assumptions. It does not remove
+future noise: even with exact calibration parameters,
+$F_{\mathrm{corr}}=F+\nu/a$. Estimated parameters add their own uncertainty;
+correlation or drift can also make averaging less effective.
 
 \subsection{Limits of a simple calibration model}
-If the response also has an unknown gain, a model such as
-$\bar F=aF+b+\nu$ requires reference measurements at more than one force.
-A nonlinear response may require fitting a curve over the intended operating
-range. A sufficiently smooth response can often be approximated locally by
-a line, but that does not justify extrapolating the line indefinitely.
+The affine model assumes that gain and offset remain constant over the
+calibrated operating range and conditions. A nonlinear response may require
+fitting a curve instead. A sufficiently smooth response can often be
+approximated locally by a line, but that does not justify extrapolating
+that line indefinitely. Temperature or time-dependent changes may require
+additional compensation or recalibration.
 
 Sensors have physical operating limits. A compression-only sensing assembly
 need not measure tensile loading, while other force sensors can measure both
@@ -420,10 +446,11 @@ the classification.
 in this chapter. Find the code for $2.50\,\mathrm V$ and the voltage interval
 represented by code 118. Why is neither number automatically a force?
 
-\item \textbf{Offset calibration.} A $10\,\mathrm N$ reference gives readings
-$9.8$, $9.9$, $9.7$, and $9.8\,\mathrm N$. Estimate the constant bias and
-correct a later reading of $12.3\,\mathrm N$. State the assumptions under
-which averaging is appropriate and explain why corrected readings still vary.
+\item \textbf{Gain and offset calibration.} Mean readings at reference
+forces of 0 and $10\,\mathrm N$ are 0.3 and $9.3\,\mathrm N$.
+Estimate gain and offset, then correct a later reading of $11.1\,\mathrm N$.
+Explain why one reference force is insufficient when both parameters are
+unknown, and why corrected samples still vary.
 
 \item \textbf{Ultrasonic ranging.} With $v_s=343\,\mathrm{m/s}$, find the
 range corresponding to a $12\,\mathrm{ms}$ echo delay. Find the direct

@@ -1,0 +1,24 @@
+\begin{tikzpicture}[scale=1.05]
+\coordinate (O) at (0,0);
+\coordinate (A) at (2.598,1.5);
+\coordinate (B) at (3.177,3.092);
+\draw[axis] (-.4,0)--(5,0) node[right] {$x_W=x_0$};
+\draw[axis] (0,-.3)--(0,4) node[above] {$y_W=y_0$};
+\draw[very thick] (O)--node[above,sloped] {$\ell_1$}(A)--node[above,sloped] {$\ell_2$}(B);
+\foreach \p in {O,A} {\draw[fill=white,thick] (\p) circle (.11);}
+\fill (B) circle (.045);
+\draw[projection] (A)--(2.598,0);
+\draw[projection] (A)--(3.8,1.5);
+\draw[projection] (B)--(3.177,0);
+\draw[projection] (B)--(0,3.092);
+\draw[projection] (A)--++(30:1.5);
+\draw[axis,robotframe] (.8,0) arc (0:30:.8);
+\node[robotframe] at (1,.24) {$q_1$};
+\draw[axis,robotframe] ($(A)+(30:.8)$) arc (30:70:.8);
+\node[robotframe] at ($(A)+(47:1.12)$) {$q_2$};
+\draw[axis,sensorframe] (B)--++(70:1) node[above] {$x_2$};
+\draw[axis,sensorframe] (B)--++(160:1) node[left] {$y_2$};
+\node[below] at (3.177,0) {$x_2^W$};
+\node[left] at (0,3.092) {$y_2^W$};
+\node[below left] at (O) {$O_0$};
+\end{tikzpicture}

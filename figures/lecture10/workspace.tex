@@ -1,0 +1,23 @@
+\begin{tikzpicture}[scale=.9]
+\fill[sensorframe!12,even odd rule] (0,0) circle (2) (0,0) circle (.7);
+\draw[sensorframe] (0,0) circle (2);
+\draw[sensorframe] (0,0) circle (.7);
+\draw[axis] (-2.2,0)--(2.4,0) node[right] {$x$};
+\draw[axis] (0,-2.2)--(0,2.5) node[above] {$y$};
+\draw[axis] (0,0)--(35:2) node[right] {$\ell_1+\ell_2$};
+\draw[axis] (0,0)--(230:.7);
+\node[below,align=center] at (-1,-.9) {$|\ell_1-\ell_2|$};
+\fill (0,0) circle (.04);
+\begin{scope}[shift={(7,-1)}]
+\draw[axis] (-.3,0)--(3,0) node[right] {$x$};
+\draw[axis] (0,-.3)--(0,3) node[above] {$y$};
+\draw[very thick,robotframe] (0,0)--(2,0)--(2,2);
+\draw[very thick,sensorframe,dashed] (0,0)--(0,2)--(2,2);
+\foreach \p in {(0,0),(2,0),(0,2)} {\draw[fill=white] \p circle (.09);}
+\fill (2,2) circle (.05) node[above right] {$(1,1)$};
+\draw[axis,robotframe] (2,2)--(2,2.9);
+\draw[axis,sensorframe] (2,2)--(2.9,2);
+\node[robotframe,right] at (2,1) {first};
+\node[sensorframe,above] at (.8,2) {second};
+\end{scope}
+\end{tikzpicture}

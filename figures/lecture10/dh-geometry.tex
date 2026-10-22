@@ -1,0 +1,81 @@
+\begin{tikzpicture}[x=1cm,y=1cm]
+\definecolor{dhgreen}{RGB}{25,145,65}
+\definecolor{dhorange}{RGB}{235,125,20}
+% Layout follows the board: two shaped links above their axis constructions.
+\coordinate (L) at (0.8,3.7);
+\coordinate (M) at (6,4.4);
+\coordinate (N) at (8.8,6.5);
+\coordinate (A) at (5.5,.5);
+\coordinate (P) at (5.8,2.84);
+\coordinate (B) at (6.9,2.02);
+\coordinate (C) at (1.25,1.9);
+% Axis lines behind the solid links.
+\draw[red!75!black,thick] (.42,5.15)--(1.65,.38);
+\draw[red!75!black,thick] (5.42,-.12)--(6.22,6.12);
+\draw[red!75!black,thick] (6.62,1.35)--(9.16,7.34);
+\node[red!75!black,above] at (.42,5.15) {$J_{i-1}$};
+\node[red!75!black,above] at (6.22,6.12) {$J_i$};
+\node[red!75!black,above] at (9.16,7.34) {$J_{i+1}$};
+% Far link and its small visible lower edge.
+\path[draw,thick,fill=gray!18] (5.56,4.26)
+ .. controls (5.9,4.02) and (6.28,4.15) .. (6.68,4.75)
+ .. controls (7.65,6.0) and (8.22,5.83) .. (8.96,6.21)
+ .. controls (9.47,6.5) and (9.24,7.0) .. (8.8,6.98)
+ .. controls (8.15,6.97) and (7.55,6.26) .. (6.96,5.61)
+ .. controls (6.35,4.94) and (6.13,4.83) .. (5.7,4.74) -- cycle;
+\path[draw,thick,fill=white] (5.56,4.4)
+ .. controls (5.9,4.16) and (6.28,4.29) .. (6.68,4.89)
+ .. controls (7.65,6.14) and (8.22,5.97) .. (8.96,6.35)
+ .. controls (9.47,6.64) and (9.24,7.14) .. (8.8,7.12)
+ .. controls (8.15,7.11) and (7.55,6.4) .. (6.96,5.75)
+ .. controls (6.35,5.08) and (6.13,4.97) .. (5.7,4.88) -- cycle;
+% Near link, curved like the board drawing rather than a stick diagram.
+\path[draw,thick,fill=gray!18] (.35,3.34)
+ .. controls (.12,3.75) and (.62,4.14) .. (1.12,3.9)
+ -- (1.5,3.65)
+ .. controls (3.3,3.96) and (4.75,3.86) .. (5.55,4.48)
+ .. controls (6.18,4.85) and (6.65,4.53) .. (6.52,4.08)
+ .. controls (6.4,3.73) and (5.92,3.77) .. (5.37,3.8)
+ .. controls (3.91,3.96) and (2.48,3.57) .. (1.35,3.28)
+ .. controls (.87,3.16) and (.55,3.19) .. (.35,3.34);
+\path[draw,thick,fill=white] (.35,3.48)
+ .. controls (.12,3.89) and (.62,4.28) .. (1.12,4.04)
+ -- (1.5,3.79)
+ .. controls (3.3,4.1) and (4.75,4.0) .. (5.55,4.62)
+ .. controls (6.18,4.99) and (6.65,4.67) .. (6.52,4.22)
+ .. controls (6.4,3.87) and (5.92,3.91) .. (5.37,3.94)
+ .. controls (3.91,4.1) and (2.48,3.71) .. (1.35,3.42)
+ .. controls (.87,3.3) and (.55,3.33) .. (.35,3.48);
+\node[rotate=6] at (3.2,4.25) {Link $i-1$};
+\node[rotate=45] at (7.45,5.91) {Link $i$};
+\foreach \p in {L,M,N} {\draw[fill=white,thick] (\p) ellipse (.09 and .055);}
+% Common normals and the three frames below the links.
+\draw[sensorframe,very thick] (C)--node[below,sloped] {$\mathrm{CN}_{i-1}$}(A);
+\draw[sensorframe,very thick] (P)--node[below,sloped] {$\mathrm{CN}_i$}(B);
+\draw[axis] (A)--++(.12,.94) node[right] {$z_{i-1}$};
+\draw[axis] (A)--++(1.1,-.36) node[right] {$x_{i-1}$};
+\draw[axis,dhorange] (P)--++(.10,.78) node[left] {$z_{i'}$};
+\draw[axis,dhorange] (P)--++(.66,-.492);
+\node[dhorange] at (6.23,2.69) {$x_{i'}$};
+\draw[axis] (B)--++(.44,1.04) node[right] {$z_i$};
+\draw[axis] (B)--++(.86,-.64) node[right] {$x_i$};
+\draw[axis] (B)--++(.87,.36) node[right] {$y_i$};
+\foreach \p in {A,P,B} {\fill (\p) circle (.035);}
+\node[below left] at (A) {$O_{i-1}$};
+\node[left,dhorange] at (P) {$O_{i'}$};
+\node[below left] at (B) {$O_i$};
+% Dimension offsets preserve the same directions as their measured segments.
+\draw[projection,dhgreen] (A)--(4.65,.5);
+\draw[projection,dhgreen] (P)--(4.95,2.84);
+\draw[<->,dhgreen,thick] (4.65,.5)--node[left] {$d_i$}(4.95,2.84);
+\draw[projection,dhgreen] (P)--(5.6,2.35);
+\draw[projection,dhgreen] (B)--(6.7,1.53);
+\draw[<->,dhgreen,thick] (5.6,2.35)--node[below,sloped] {$a_i$}(6.7,1.53);
+% Angle guides compare directions translated to the same origin.
+\draw[projection] (P)--++(1.12,-.369);
+\draw[->,dhgreen,thick] (6.53,2.60) .. controls (6.57,2.49) and (6.52,2.38) .. (6.43,2.37);
+\node[dhgreen] at (6.65,2.98) {$\theta_i$};
+\draw[projection] (B)--++(.17,1.34);
+\draw[->,dhgreen,thick] (7.05,3.19) .. controls (7.16,3.22) and (7.28,3.17) .. (7.36,3.10);
+\node[dhgreen,above] at (7.23,3.32) {$\alpha_i$};
+\end{tikzpicture}

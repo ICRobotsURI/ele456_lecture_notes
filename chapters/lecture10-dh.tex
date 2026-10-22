@@ -1,0 +1,278 @@
+\section{The Denavit--Hartenberg frame convention}
+\label{sec:l10-dh}
+The product in Equation~\eqref{eq:l10-product} reduces the direct-kinematics
+problem to finding the pose of each link relative to its predecessor.
+Arbitrary link frames are valid, but they can make those local matrices
+unnecessarily complicated. The \emph{Denavit--Hartenberg} (DH) convention
+chooses frames so that each local transformation has just four parameters:
+two translations and two rotations. For a one-degree-of-freedom joint,
+only one of these parameters varies with joint motion.
+
+We use the \emph{standard DH convention}. In particular, joint $i$ acts
+about or along $z_{i-1}$, and the local matrix maps coordinates from frame
+$i$ to frame $i-1$. Other conventions, including modified DH, use different
+frame assignments and matrix formulas. A parameter table must always be
+used with the convention that defines it.
+
+\subsection{Joint axes and common normals}
+Let $J_i$ denote the axis of joint $i$: its rotation axis for a revolute
+joint or its translation direction, represented by a chosen axis line,
+for a prismatic joint. For the generic construction, consider neighboring
+axes $J_i$ and $J_{i+1}$ that are \emph{skew}: they neither intersect nor
+are parallel.
+
+The shortest segment joining two skew lines is perpendicular to both.
+The line containing that segment is their \emph{common normal}, denoted
+$\mathrm{CN}_i$. It intersects the axes at their closest points. Extending
+either joint axis farther does not change these points or the separation.
+The common normal is a geometric construction; it need not follow the
+shape of the physical link joining the joints.
+
+\subsection{Assigning an interior link frame}
+For $i=1,\ldots,n-1$, place frame $i$ on link $i$ using the following rules:
+\begin{enumerate}
+\item Put $O_i$ at the intersection of $J_{i+1}$ and $\mathrm{CN}_i$.
+\item Align $z_i$ with $J_{i+1}$ and choose its positive direction.
+\item Direct $x_i$ along $\mathrm{CN}_i$, from $J_i$ toward $J_{i+1}$.
+      The axis starts at $O_i$ and points in that same direction.
+\item Complete a right-handed frame with
+      $\hat y_i=\hat z_i\times\hat x_i$.
+\end{enumerate}
+Here hats denote unit direction vectors. The common-normal construction
+makes $x_i$ perpendicular to $z_i$. Consequently, their directions determine
+$y_i$ uniquely; a drawing can omit $y_i$ without leaving the frame undefined.
+
+The index shift is essential: $z_i$ follows joint $i+1$, whereas joint $i$
+connects links $i-1$ and $i$ and acts about or along $z_{i-1}$. There are
+$n$ joints, $n$ moving links plus the base, and $n+1$ link frames numbered
+$0,\ldots,n$. An interior link $i$ lies between joints $i$ and $i+1$;
+the terminal link has no physical joint $n+1$.
+
+Either orientation of a joint axis can be chosen initially. Reversing it
+changes the associated signs and frame assignments, so all parameters and
+joint-coordinate definitions must be made consistent with that choice.
+Once chosen, the frames remain attached to their links as the arm moves.
+
+\subsection{End frames and nonunique constructions}
+The interior rule cannot be applied literally at both ends of the chain.
+For frame 0, choose $O_0$ on $J_1$, align $z_0$ with $J_1$, and choose a
+perpendicular $x_0$. This base frame need not coincide with the world frame.
+At the other end, choose a terminal frame compatible with the DH
+construction; its $z_n$ is an auxiliary axis, not an additional joint.
+A desired tool frame can be connected to it by a fixed transform as in
+Equation~\eqref{eq:l10-offsets}.
+
+The skew-axis rule also needs choices in special geometries. Distinct
+parallel axes have infinitely many common normals. Intersecting,
+nonparallel axes have zero separation, with a normal direction
+perpendicular to both. Coincident axes leave still more freedom.
+These situations are common in robot designs. The transformation derived
+below still applies once a consistent DH frame assignment has been made;
+the frame assignment need not be unique.
+
+\section{Four parameters for one adjacent-frame transformation}
+\label{sec:l10-dh-parameters}
+To relate frames $i-1$ and $i$, introduce a temporary frame $i'$.
+Its origin is where $J_i$ meets $\mathrm{CN}_i$. Choose
+$\hat z_{i'}=\hat z_{i-1}$ and $\hat x_{i'}=\hat x_i$, with $y_{i'}$
+completing the right-handed frame. This frame combines the incoming joint
+axis with the outgoing common-normal direction.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture10/dh-geometry}
+\caption{DH construction for two neighboring links. Red lines extend the
+three joint axes; blue lines show their common normals. The intermediate
+frame $i'$ is orange, and the four parameters are marked in green.
+Common normals are perpendicular to their joint axes in space, even when
+the perspective projection does not show a right angle. Omitted $y$ axes
+follow from the right-hand rule.}
+\label{fig:l10-dh-geometry}
+\end{figure}
+
+The four DH parameters describe two successive changes of frame:
+\begin{itemize}
+\item $d_i$ is the signed displacement from $O_{i-1}$ to $O_{i'}$
+      along $z_{i-1}$.
+\item $\theta_i$ is the angle from $x_{i-1}$ to $x_{i'}=x_i$
+      about $z_{i-1}$.
+\item $a_i$ is the displacement from $O_{i'}$ to $O_i$ along $x_i$.
+\item $\alpha_i$ is the angle from $z_{i'}=z_{i-1}$ to $z_i$
+      about $x_i$.
+\end{itemize}
+Angles follow the right-hand rule about their named positive axes.
+A positive angle appears counterclockwise when viewed from the positive
+end of that axis toward the origin. This viewing direction matters in a
+perspective drawing. The lengths $a_i,d_i$ have units of length; the
+angles $\alpha_i,\theta_i$ are measured in radians unless stated otherwise.
+
+With $x_i$ directed from one skew axis toward the next, $a_i$ is their
+nonnegative separation. The offset $d_i$ may be positive, zero, or negative:
+it is a directed displacement, not an unsigned distance.
+
+\subsection{Reading the parameters without the temporary frame}
+The temporary frame helps derive the matrix, but it need not be drawn for
+every joint. Since the two displacement directions are perpendicular,
+the vector between the link-frame origins satisfies
+\begin{equation}
+ \overrightarrow{O_{i-1}O_i}=d_i\hat z_{i-1}+a_i\hat x_i.
+ \label{eq:l10-dh-displacement}
+\end{equation}
+All vectors in this equation must be expressed in the same reference
+frame. Taking projections gives
+\[
+ d_i=\hat z_{i-1}\cdot\overrightarrow{O_{i-1}O_i},\qquad
+ a_i=\hat x_i\cdot\overrightarrow{O_{i-1}O_i}.
+\]
+Thus the phrase ``distance between the origins along an axis'' means a
+\emph{signed projection}, not the length of the diagonal joining them.
+For example, if $a_i=0.4\,\mathrm m$ and $d_i=0.3\,\mathrm m$, the
+origins are $0.5\,\mathrm m$ apart, but neither DH translation equals
+$0.5\,\mathrm m$.
+
+Likewise, $\theta_i$ can be read directly from $x_{i-1}$ to $x_i$ about
+$z_{i-1}$, and $\alpha_i$ from $z_{i-1}$ to $z_i$ about $x_i$.
+Directions can be translated to a common point to compare their angles.
+The auxiliary frame adds no joint, degree of freedom, or extra row to the
+DH table.
+
+\section{Deriving the standard DH matrix}
+\label{sec:l10-dh-matrix}
+The temporary frame splits the desired transformation into
+\begin{equation}
+ H_i^{i-1}=H_{i'}^{i-1}H_i^{i'}.
+ \label{eq:l10-dh-factor}
+\end{equation}
+From frame $i-1$ to frame $i'$, the origin moves by $d_i$ along
+$z_{i-1}$ and the axes rotate by $\theta_i$ about that same axis:
+\begin{equation}
+ H_{i'}^{i-1}=\begin{bmatrix}
+ \cos\theta_i&-\sin\theta_i&0&0\\
+ \sin\theta_i& \cos\theta_i&0&0\\
+ 0&0&1&d_i\\0&0&0&1
+ \end{bmatrix}.
+ \label{eq:l10-dh-z}
+\end{equation}
+From $i'$ to $i$, the origin moves by $a_i$ along $x_{i'}=x_i$ and
+the axes rotate by $\alpha_i$ about that direction:
+\begin{equation}
+ H_i^{i'}=\begin{bmatrix}
+ 1&0&0&a_i\\
+ 0&\cos\alpha_i&-\sin\alpha_i&0\\
+ 0&\sin\alpha_i& \cos\alpha_i&0\\
+ 0&0&0&1
+ \end{bmatrix}.
+ \label{eq:l10-dh-x}
+\end{equation}
+The translation in this second matrix is along $x$, even though the
+twist changes the direction of $z$. Matrix multiplication gives
+\begin{equation}
+ \boxed{H_i^{i-1}=\begin{bmatrix}
+ c_{\theta_i}&-s_{\theta_i}c_{\alpha_i}&s_{\theta_i}s_{\alpha_i}&a_ic_{\theta_i}\\
+ s_{\theta_i}&c_{\theta_i}c_{\alpha_i}&-c_{\theta_i}s_{\alpha_i}&a_is_{\theta_i}\\
+ 0&s_{\alpha_i}&c_{\alpha_i}&d_i\\
+ 0&0&0&1
+ \end{bmatrix},}
+ \label{eq:l10-dh-full}
+\end{equation}
+where $c_\beta=\cos\beta$ and $s_\beta=\sin\beta$.
+The translation column is expressed in frame $i-1$: the displacement
+$a_i$ is resolved along its $x$ and $y$ directions by $\theta_i$.
+
+Using $4\times4$ elementary rotation and translation matrices, the same
+factorization is
+\[
+ H_i^{i-1}=\operatorname{Rot}_z(\theta_i)
+ \operatorname{Trans}_z(d_i)
+ \operatorname{Trans}_x(a_i)\operatorname{Rot}_x(\alpha_i).
+\]
+This describes successive local frame placements: after the $z$ rotation,
+the $x$ operations use the rotated $x$ direction. When the matrix acts on
+a coordinate column, its rightmost factor acts first, as usual.
+A translation along an axis commutes with a rotation about that same
+axis, but the $z$ and $x$ groups cannot generally be interchanged.
+
+\subsection{Where the joint variable enters}
+The parameters $a_i$ and $\alpha_i$ describe fixed link geometry.
+For a revolute joint, $d_i$ is also constant and $\theta_i$ varies.
+For a prismatic joint, $\theta_i$ is constant and $d_i$ varies:
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Joint type & Variable parameter & Constant parameters\\
+\midrule
+Revolute & $\theta_i=q_i+\theta_{i,0}$ & $a_i,\alpha_i,d_i$\\
+Prismatic & $d_i=q_i+d_{i,0}$ & $a_i,\alpha_i,\theta_i$\\
+\bottomrule
+\end{tabular}
+\end{center}
+The constants $\theta_{i,0}$ and $d_{i,0}$ allow the joint coordinate's
+zero to differ from the DH parameter's zero. If the zeros coincide,
+these reduce to $\theta_i=q_i$ and $d_i=q_i$, respectively. These formulas
+assume $q_i$ increases in the chosen positive DH direction; an oppositely
+signed encoder coordinate must be converted accordingly.
+
+This explains why four parameters still give a one-variable local map
+$H_i^{i-1}(q_i)$. The constants can be obtained from dimensions, a CAD
+model, or calibration. Moving another joint changes the world pose of
+these frames but does not introduce another independent variable into
+their relative transformation.
+
+\subsection{Worked example: checking one DH row}
+Consider a revolute joint with zero angular offset and
+\[
+ a_i=0.4\,\mathrm m,\qquad d_i=0.3\,\mathrm m,\qquad
+ \alpha_i=\pi/2,\qquad q_i=\theta_i=\pi/2.
+\]
+Substitution into Equation~\eqref{eq:l10-dh-full} gives
+\[
+ H_i^{i-1}=\begin{bmatrix}
+ 0&0&1&0\\1&0&0&0.4\\0&1&0&0.3\\0&0&0&1
+ \end{bmatrix}.
+\]
+The origin is at $(0,0.4,0.3)\,\mathrm m$ in frame $i-1$.
+The first rotation column shows that $x_i$ points along $y_{i-1}$;
+the third shows that $z_i$ points along $x_{i-1}$. The columns are
+orthonormal and right-handed. These geometric checks are often easier
+than finding a sign error by rereading the entire formula.
+
+If the same constant values $a_i=0.4\,\mathrm m$, $\alpha_i=\pi/2$,
+and $\theta_i=\pi/2$ instead describe a prismatic joint with $d_i=q_i$,
+only the third translation entry changes as that joint moves. A DH row
+must therefore specify which parameter is the joint variable, not merely
+four numbers at one configuration.
+
+\clearpage
+\section{From a robot drawing to direct kinematics}
+\label{sec:l10-dh-procedure}
+The DH construction turns the geometric problem into a repeatable sequence:
+\begin{enumerate}
+\item Identify and number the $n$ physical joint axes $J_1,\ldots,J_n$.
+      Record each joint's type and positive motion direction.
+\item Construct the $n-1$ common normals between neighboring joint axes.
+      Resolve nonunique choices consistently.
+\item Assign frames $0,\ldots,n$, including the base and terminal choices.
+      Drawing $x$ and $z$ is sufficient when right-handedness is understood.
+\item Make a DH table with one row per joint, $i=1,\ldots,n$.
+      Record $a_i,\alpha_i,d_i,\theta_i$ and identify the variable entry.
+\item Substitute each row into Equation~\eqref{eq:l10-dh-full} to obtain
+      $H_i^{i-1}(q_i)$.
+\item Multiply $H_n^0=H_1^0H_2^1\cdots H_n^{n-1}$. Include the base
+      and tool offsets when the requested frames differ from 0 and $n$.
+\end{enumerate}
+There is no row 0 in this indexing. There are $n$ matrices even though
+only $n-1$ common normals join physical joint pairs: the terminal-frame
+choice supplies the remaining geometry. The temporary frames $i'$ are
+derivation aids and do not change these counts.
+
+Before expanding a long product, check one simple configuration. Verify
+that each origin lies where the drawing predicts, that the rotation
+columns describe the intended axes, and that a positive change in $q_i$
+moves the model in the intended direction. Different consistent frame
+choices may produce different DH tables. They should give the same
+physical tool pose when expressed in the same world and tool frames,
+with the corresponding joint-coordinate definitions.
+
+The planar RR matrices derived earlier are a useful consistency check.
+Setting $a_1=\ell_1$, $a_2=\ell_2$, $\alpha_1=\alpha_2=0$,
+$d_1=d_2=0$, and $\theta_i=q_i$ in the spatial DH formula reproduces
+those planar transformations, with an additional unchanged $z$ coordinate.
