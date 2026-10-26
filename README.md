@@ -64,12 +64,14 @@ and prismatic joints, configuration variables, transform chains, and direct
 versus inverse kinematics. Lecture 11 extends it with the standard
 Denavit--Hartenberg convention, common normals, signed parameter definitions,
 the intermediate-frame derivation, and a procedure for building the forward
-map. Five vector figures, planar RR and DH worked examples, and fourteen
-exercises develop the geometry and its matrix representation.
+map. Lecture 12 adds special frame choices, complete planar RR and spatial
+RRP examples, and a coaxial RP illustration. Eight vector figures and
+twenty-one exercises support the chapter's geometric and matrix models.
 
 For correspondence with the classes, lecture 10 covers Sections 10.1--10.6;
-lecture 11 covers Sections 10.7--10.10. Section 10.11 groups the exercises
-into arm kinematics/workspace and DH frames/transformations.
+lecture 11 covers Sections 10.7--10.10; lecture 12 covers Sections
+10.11--10.13. Section 10.14 groups the exercises into arm kinematics,
+DH fundamentals, and DH examples/special cases.
 Appendix A collects the rotation-conversion reference formulas, including
 scalar-first unit quaternions and singular-case notes.
 
@@ -102,6 +104,7 @@ On Overleaf, upload the project and select `main.tex` as the main document.
 - `chapters/lecture09.tex`: Chapter 9, differential-drive kinematics and odometry.
 - `chapters/lecture10.tex`: Chapter 10, robotic arms and direct kinematics.
 - `chapters/lecture10-dh.tex`: DH sections of Chapter 10, sourced from lecture 11.
+- `chapters/lecture10-dh-examples.tex`: special cases and worked DH examples from lecture 12.
 - `appendices/rotation-conversions.tex`: conversion reference adapted from the supplied handout.
 - `figures/lecture02/`: vector diagrams drawn in TikZ and included by the chapter.
 - `figures/lecture03/`: diagrams for affine and homogeneous transformations.
@@ -111,14 +114,14 @@ On Overleaf, upload the project and select `main.tex` as the main document.
 - `figures/lecture07/`: grayscale, Bayer sampling, pinhole, image-coordinate, and viewing-ray diagrams.
 - `figures/lecture08/`: actuation chain, PWM, cylinder, transmission, and encoder diagrams.
 - `figures/lecture09/`: drive geometry, motion cases, velocity projection, integration, sampling, and drift diagrams.
-- `figures/lecture10/`: joint symbols, serial-chain topology, planar RR geometry, workspace, and DH frame geometry.
+- `figures/lecture10/`: joint symbols, serial-chain topology, planar RR geometry, workspace, DH frame geometry, and RR/RRP/coaxial examples.
 - `chapters/lecture-template.tex`: starting point for future lectures.
 - `lectures/`: original boards and transcripts (local only, excluded from Git).
 - `editorial-notes.md`: source decisions and details requiring confirmation.
 
 ## Add a lecture
 
-1. Put the next board material and transcript in `lectures/12/`, then `13/`, etc.
+1. Put the next board material and transcript in `lectures/13/`, then `14/`, etc.
 2. Assign each topic to the appropriate chapter, extending an existing chapter
    when a class continues that topic. Record the source mapping in `editorial-notes.md`.
 3. Extend the appropriate chapter when a topic continues. For new

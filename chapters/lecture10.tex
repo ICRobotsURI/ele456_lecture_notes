@@ -344,6 +344,7 @@ transformations, and multiply them in the correct order. Workspace and
 inverse-kinematics questions can then be posed against a precise model.
 
 \input{chapters/lecture10-dh}
+\input{chapters/lecture10-dh-examples}
 
 \clearpage
 \section{Additional exercises}
@@ -428,4 +429,46 @@ recover Equation~\eqref{eq:l10-planar}. Identify the final $z$ direction.
 chosen joint-axis direction while leaving every parameter and encoder
 sign unchanged generally changes the predicted motion. Why can two
 different DH tables nevertheless model the same physical arm?
+\end{enumerate}
+
+\clearpage
+\subsection{DH examples and special cases}
+\begin{enumerate}
+\item \textbf{Parallel axes.} Explain why two distinct parallel joint
+axes have infinitely many common normals. For a planar RR arm, describe
+a choice that gives $d_1=0$. Why must the frames stay fixed to their links
+after making this choice?
+
+\item \textbf{Intersecting axes.} At an intersection, let
+$\hat z_{i-1}=(0,0,1)$ and $\hat z_i=(0,1,0)$ in a common right-handed
+frame. Choose $\hat x_i=(1,0,0)$. Find $a_i$ and the signed twist
+$\alpha_i$. Repeat with $\hat x_i=(-1,0,0)$. Is an arbitrary direction
+through the intersection an admissible $x_i$ axis?
+
+\item \textbf{Planar RR calculation.} Use the DH table in
+Section~\ref{sec:l10-dh-rr} with $\ell_1=0.8\,\mathrm m$,
+$\ell_2=0.4\,\mathrm m$, $q_1=\pi/2$, and $q_2=-\pi/2$.
+Compute $H_2^0$ and verify its translation by drawing the two link vectors.
+
+\item \textbf{Spatial RRP calculation.} For the table in
+Section~\ref{sec:l10-dh-rrp}, take $\ell_1=0.6\,\mathrm m$,
+$\ell_2=0.4\,\mathrm m$, $q_1=\pi/2$, $q_2=\pi/2$, and
+$q_3=0.3\,\mathrm m$. Compute the tool position and rotation matrix.
+In which base-frame direction does the tool move if $q_3$ increases?
+
+\item \textbf{A vertical configuration is not a fixed constraint.}
+For the same RRP arm, hold $q_1$ and $q_3$ fixed and compare $q_2=0$
+with $q_2=\pi/2$. Find the tool height and prismatic direction in each
+case. Explain why $a_1=a_2=a_3=0$ does not imply a robot of zero size.
+
+\item \textbf{Moving the base origin.} Place a new base origin at $O_1$
+of the RRP arm, keeping its axes parallel to the old base axes and fixed
+in space. Which DH constant becomes zero? Write the fixed transformation
+that restores the tool pose relative to the original base.
+
+\item \textbf{Coaxial joints.} For an ideal coaxial RP chain, choose
+$a_1=a_2=0$, $\alpha_1=\alpha_2=0$, $d_1=0$, $\theta_1=q_1$,
+$\theta_2=0$, and $d_2=q_2$. Compute $H_2^0$. Explain why both coordinates
+affect the tool pose. How does this differ from two coaxial revolute
+joints with zero axial offsets?
 \end{enumerate}

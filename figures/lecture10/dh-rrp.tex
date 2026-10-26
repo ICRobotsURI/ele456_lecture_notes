@@ -1,0 +1,64 @@
+\begin{tikzpicture}[scale=1.3]
+\definecolor{dhbase}{RGB}{30,150,65}
+\definecolor{dhone}{RGB}{225,115,20}
+\definecolor{dhtwo}{RGB}{155,65,180}
+\definecolor{dhthree}{RGB}{195,65,120}
+% Consistent oblique projection: X=(1,.1), Y=(-.8,.4), Z=(0,1).
+% Shown at q1=pi, q2=0, l1=3, l2=3.5, q3=1.5 (drawing units).
+\coordinate (O) at (0,0);
+\coordinate (A) at (0,3);
+\coordinate (B) at (2.8,1.6);
+\coordinate (T) at (2.8,3.1);
+\draw[red!75!black] (0,-.3)--(0,4.1) node[above] {$J_1$};
+\draw[red!75!black] (-1.2,3.6)--(3.8,1.1) node[right] {$J_2$};
+\draw[red!75!black] (2.8,.6)--(2.8,4.1) node[above] {$J_3$};
+% Base revolute joint and upright support.
+\draw[line width=6pt,gray!60] (0,.4)--(A);
+\path[draw,thick,fill=gray!15] (-.35,.9)--(-.35,1.8)
+ arc[start angle=180,end angle=0,x radius=.35,y radius=.12]
+ --(.35,.9) arc[start angle=0,end angle=-180,x radius=.35,y radius=.12];
+\draw[fill=white,thick] (0,1.8) ellipse (.35 and .12);
+% Second revolute joint and its link toward the slider assembly.
+\draw[line width=8pt,gray!70] (A)--(B);
+\draw[line width=5pt,gray!15] (A)--(B);
+\begin{scope}[shift={(A)},rotate=-26.565]
+\path[draw,thick,fill=gray!15] (-.45,-.23)--(.55,-.23)
+ arc[start angle=-90,end angle=90,x radius=.12,y radius=.23]
+ --(-.45,.23) arc[start angle=90,end angle=270,x radius=.12,y radius=.23];
+\draw[fill=white,thick] (.55,0) ellipse (.12 and .23);
+\end{scope}
+% Prismatic block, shaft, and terminal gripper.
+\path[draw,thick,fill=gray!15] (2.45,1.25)--(3.05,1.15)--(3.05,1.8)--(2.45,1.9)--cycle;
+\path[draw,thick,fill=white] (2.45,1.9)--(2.72,2.1)--(3.32,2)--(3.05,1.8)--cycle;
+\path[draw,thick,fill=gray!30] (3.05,1.15)--(3.32,1.35)--(3.32,2)--(3.05,1.8)--cycle;
+\draw[line width=5pt,gray!70] (B)--(T);
+\draw[thick] (2.55,3.1)--(2.6,3.4)--(2.72,3.25);
+\draw[thick] (3.05,3.1)--(3,3.4)--(2.88,3.25);
+\draw[<->,thick] (3.65,1.85)--(3.65,2.65) node[midway,right] {P};
+% Common normals through the intersecting joint axes.
+\draw[sensorframe] (-1.25,2.875)--(1.05,3.105);
+\node[sensorframe,above] at (1.05,3.2) {$\mathrm{CN}_1$};
+\draw[sensorframe] (1.5,1.47)--(4.05,1.725) node[right] {$\mathrm{CN}_2$};
+\draw[axis,dhbase] (O)--(0,.65) node[below left] {$z_0$};
+\draw[axis,dhbase] (O)--(1.3,.13) node[right] {$x_0$};
+\draw[axis,dhone] (A)--++(-1,-.1) node[below] {$x_1$};
+\draw[axis,dhone] (A)--++(.8,-.4) node[below] {$z_1$};
+\draw[axis,dhtwo] (B)--++(-1,-.1) node[left] {$x_2$};
+\draw[axis,dhtwo] (B)--++(0,.95) node[left] {$z_2$};
+\draw[axis,dhthree] (T)--++(-1,-.1) node[left] {$x_3$};
+\draw[axis,dhthree] (T)--++(0,.7) node[left] {$z_3$};
+\foreach \p in {O,A,B,T} {\fill (\p) circle (.035);}
+\node[dhbase,below left] at (O) {$O_0$};
+\node[dhone,above left] at (A) {$O_1$};
+\node[dhtwo,below left] at (B) {$O_2$};
+\node[dhthree,right] at (T) {$O_3$};
+\draw[<->] (-1.7,0)--node[left] {$\ell_1$}(-1.7,3);
+\draw[projection] (O)--(-1.8,0);
+\draw[projection] (A)--(-1.8,3);
+\draw[<->] (.2,4.25)--node[above,sloped] {$\ell_2$}(3,2.85);
+\draw[projection] (A)--(.2,4.25);
+\draw[projection] (B)--(3,2.85);
+\draw[<->] (4.35,1.6)--node[right] {$q_3$}(4.35,3.1);
+\draw[projection] (B)--(4.45,1.6);
+\draw[projection] (T)--(4.45,3.1);
+\end{tikzpicture}
