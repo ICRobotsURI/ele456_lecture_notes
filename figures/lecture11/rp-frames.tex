@@ -1,0 +1,25 @@
+\begin{tikzpicture}[scale=1.05]
+\coordinate (O) at (0,0); \coordinate (P) at (30:4);
+\begin{scope}[rotate=30]
+\draw[fill=gray!25,thick] (.25,-.32) rectangle (2.5,.32);
+\draw[fill=gray!10,thick] (1.6,-.16) rectangle (4,.16);
+\draw[thick] (4,-.45)--(4.35,-.45) (4,-.45)--(4,.45)--(4.35,.45);
+\draw[<->] (.4,-.7)--(4,-.7) node[midway,below] {$q_2$};
+\end{scope}
+\draw[fill=gray!15,thick] (0,0) circle (.23);
+\fill (0,0) circle (.05);
+\node[below left] at (0,-.25) {$O_0=O_1$};
+\node[below left] at (-.15,.15) {$J_1=z_0\ (\odot)$};
+\draw[axis] (O)--(2,0) node[right] {$x_0$};
+\draw[axis] (O)--(0,2.5) node[above] {$y_0$};
+\draw[axis,blue!75!black] (O)--(120:2) node[above] {$x_1$};
+\draw[blue!65!black,dashed] (120:2.2)--(300:.8);
+\draw[axis,red!75!black] (O)--(30:2.9) node[above left] {$z_1,\ J_2$};
+\draw[->] (1,0) arc (0:120:1);
+\node at (60:1.23) {$q_1$};
+\fill (P) circle (.05);
+\draw[axis,blue!75!black] (P)--++(120:1.3) node[above] {$x_2$};
+\draw[axis,red!75!black] (P)--++(30:1.5) node[right] {$z_2$};
+\node[below right] at (P) {$O_2$};
+\node[align=center] at (3.8,-1.15) {$y_1,y_2$ point out of the page\\$x_1$: common normal};
+\end{tikzpicture}

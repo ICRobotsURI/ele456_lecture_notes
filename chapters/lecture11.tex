@@ -1,0 +1,318 @@
+\chapter{Configuration and task spaces}
+\label{chap:lecture11}
+Direct kinematics describes the result of a robot configuration. Planning
+asks how to move from a starting configuration to a configuration that
+accomplishes a task. A mobile robot may need to reach a doorway, while a
+manipulator may need to place its tool at an object. Both problems require
+a description of the robot's possible configurations and of the desired
+outcome. These descriptions need not use the same coordinates.
+
+\section{A configuration describes the robot's geometry}
+A \emph{configuration} specifies the placement of the robot's bodies,
+subject to its mechanical constraints. A configuration vector $q$ collects
+independent coordinates sufficient to determine that placement, given the
+robot's geometry and base-frame definition.
+
+For a rigid mobile robot moving in a plane, one choice is
+\[
+ q=\begin{bmatrix}x_R^W&y_R^W&\theta_R^W\end{bmatrix}\trans.
+\]
+The position and heading determine its footprint in the environment.
+For a fixed-base planar RR arm, the corresponding description is
+\[
+ q=\begin{bmatrix}q_1&q_2\end{bmatrix}\trans.
+\]
+Here the coordinates are joint angles rather than world positions.
+Nevertheless, knowing them determines the placement of both links and
+the tool through forward kinematics.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture11/configurations}
+\caption{Two configuration descriptions: world position and heading for
+a planar mobile robot, and relative joint angles for a fixed-base RR arm.
+Each point in the corresponding configuration space represents an entire
+robot placement, not just the location of its tool or reference point.}
+\label{fig:l11-configurations}
+\end{figure}
+
+The \emph{configuration space}, denoted $\mathcal C$, is the set of
+configurations admitted by the kinematic model and any specified joint
+limits. Environmental collision constraints will be treated separately
+through a free subset of $\mathcal C$.
+
+Configuration is not generally the complete dynamic state. Velocities,
+and sometimes actuator or other internal states, are also needed to
+predict future motion from applied inputs. Here the question is geometric:
+where are the robot's parts? The dimension of $\mathcal C$ is the number
+of independent configuration degrees of freedom. A coordinate vector is
+a representation of this space; angular coordinates require care at their
+chosen wrap boundaries.
+
+\section{The task selects the output coordinates}
+A \emph{task space} describes the quantities relevant to the requested
+outcome. For example:
+\begin{center}
+\begin{tabular}{p{.44\linewidth}p{.46\linewidth}}
+\toprule
+Task & Possible task coordinates\\
+\midrule
+Reach a location in a plane & Position $(x,y)$\\
+Hold a point in three-dimensional space & Position $(x,y,z)$\\
+Maintain altitude & Height $z$\\
+Keep a container upright & Tilt, represented locally by roll and pitch\\
+Place and orient a tool & Full position and orientation\\
+\bottomrule
+\end{tabular}
+\end{center}
+A position-only task does not prescribe final orientation. Keeping a
+container upright need not prescribe yaw, although carrying liquid may
+also require limits on acceleration. A more detailed task may constrain
+several points or axes on the robot. Collision avoidance must account for
+the robot's full geometry even if the task output contains only tool
+position.
+
+Write the task output as $\xi$ and the task space as $\mathcal X$.
+The robot model defines a task map
+\begin{equation}
+ \xi=f(q),\qquad f:\mathcal C\longrightarrow\mathcal X.
+ \label{eq:l11-taskmap}
+\end{equation}
+For a tool-position task, $f$ is the position part of the direct kinematics.
+For a full-pose task it includes orientation as well. Configuration space
+and task space are related by this map; neither is the mathematical dual
+or set complement of the other.
+
+The \emph{reachable task set} is
+\begin{equation}
+ \mathcal X_{\mathrm{reach}}=f(\mathcal C).
+ \label{eq:l11-reachable}
+\end{equation}
+It can be smaller than the space in which task coordinates are expressed.
+For a position task, this set is the tool's position workspace. A desired
+task value may correspond to no configuration, one configuration, or
+multiple configurations. The RR examples in Chapter~\ref{chap:lecture10}
+already showed that different joint configurations can yield the same
+tool position.
+
+\section{An RP arm connects the two descriptions}
+\label{sec:l11-rp}
+Consider a revolute joint followed by a prismatic joint. The first axis
+is perpendicular to the drawing plane; the second lies in that plane and
+extends toward the tool. The two axes intersect at the base. Let $q_1$
+be the revolute coordinate and $q_2$ the tool's distance along the
+prismatic axis, with no additional extension offset.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture11/rp-frames}
+\caption{The planar RP arm and its DH frames. The revolute axis $J_1=z_0$
+points out of the page; $J_2$ follows the slider. Frames 0 and 1 share an
+origin. The common normal is along $x_1$, perpendicular to both joint
+axes. This choice makes the tool bearing $q_1-\pi/2$, rather than $q_1$.}
+\label{fig:l11-rp}
+\end{figure}
+
+\subsection{Frame assignment and direct kinematics}
+Choose frame 0 to coincide with the world frame, with $z_0$ out of the
+page. Frame 1 has the same origin, $z_1$ along the positive prismatic
+direction, and $x_1$ along the common normal. Choose its sense so that
+the twist from $z_0$ to $z_1$ about $x_1$ is $+\pi/2$. At the tool,
+choose $x_2$ parallel to $x_1$ and $z_2$ parallel to $z_1$.
+
+The standard DH table is
+\begin{center}
+\begin{tabular}{cccccc}
+\toprule
+$i$ & Type & $\theta_i$ & $\alpha_i$ & $a_i$ & $d_i$\\
+\midrule
+1 & R & $q_1$ & $\pi/2$ & $0$ & $0$\\
+2 & P & $0$ & $0$ & $0$ & $q_2$\\
+\bottomrule
+\end{tabular}
+\end{center}
+With $c_1=\cos q_1$ and $s_1=\sin q_1$,
+\[
+ H_1^0=\begin{bmatrix}c_1&0&s_1&0\\s_1&0&-c_1&0\\
+ 0&1&0&0\\0&0&0&1\end{bmatrix},\qquad
+ H_2^1=\begin{bmatrix}1&0&0&0\\0&1&0&0\\0&0&1&q_2\\0&0&0&1\end{bmatrix}.
+\]
+Their product gives
+\begin{equation}
+ H_2^0=\begin{bmatrix}
+ c_1&0&s_1&q_2s_1\\s_1&0&-c_1&-q_2c_1\\
+ 0&1&0&0\\0&0&0&1
+ \end{bmatrix}.
+ \label{eq:l11-rp-H}
+\end{equation}
+The translation column is the tool position; the upper-left block is its
+orientation. For the planar position task, retain only
+\begin{equation}
+ \boxed{\xi=\begin{bmatrix}x\\y\end{bmatrix}
+ =f(q)=\begin{bmatrix}q_2\sin q_1\\-q_2\cos q_1\end{bmatrix}.}
+ \label{eq:l11-rp-map}
+\end{equation}
+The sine and negative cosine follow from the chosen DH frames. At $q_1=0$,
+the slider points along $-y_0$; at $q_1=\pi/2$, it points along $+x_0$.
+Thus $q_1$ is the angle of $x_1$ from $x_0$, not the polar bearing of
+the extension itself.
+
+\subsection{Joint limits and boundary points}
+Assume the limits
+\begin{equation}
+ 0\le q_1\le\frac{3\pi}{2},\qquad
+ 1\,\mathrm m\le q_2\le2\,\mathrm m.
+ \label{eq:l11-limits}
+\end{equation}
+The configuration space is a rectangle in the $(q_1,q_2)$ coordinate
+plot. Its horizontal axis is measured in radians and its vertical axis
+in meters; these are not spatial $x$ and $y$ axes.
+
+Mapping selected boundary points produces the following correspondence:
+\begin{center}
+\begin{tabular}{ccccc}
+\toprule
+Point & $q_1$ (rad) & $q_2$ (m) & $x$ (m) & $y$ (m)\\
+\midrule
+A & $0$ & $1$ & $0$ & $-1$\\
+B & $0$ & $2$ & $0$ & $-2$\\
+C & $3\pi/2$ & $1$ & $-1$ & $0$\\
+D & $3\pi/2$ & $2$ & $-2$ & $0$\\
+E & $\pi$ & $1$ & $0$ & $1$\\
+F & $\pi$ & $2$ & $0$ & $2$\\
+L & $\pi/2$ & $1$ & $1$ & $0$\\
+M & $\pi/2$ & $2$ & $2$ & $0$\\
+\bottomrule
+\end{tabular}
+\end{center}
+These points identify useful corners and directions, but the continuous
+boundary follows from the map itself. Since
+$x^2+y^2=q_2^2$, constant extension traces a circular arc. Constant $q_1$
+traces a radial segment. With polar bearing $\phi=q_1-\pi/2$, the reachable
+set is
+\begin{equation}
+ \mathcal X_{\mathrm{reach}}=
+ \{(r\cos\phi,r\sin\phi):1\le r\le2,\ -\pi/2\le\phi\le\pi\},
+ \label{eq:l11-sector}
+\end{equation}
+where lengths are in meters. This is three quarters of an annulus: the
+lower-left sector is absent because of the revolute joint limit.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture11/mapped-spaces}
+\caption{The same RP model represented in task coordinates (left) and
+configuration coordinates (right). Matching letters denote corresponding
+points. The nonlinear map converts horizontal edges of the rectangle into
+circular arcs and vertical edges into radial segments.}
+\label{fig:l11-mapped}
+\end{figure}
+
+\section{A straight line depends on the chosen space}
+\label{sec:l11-straight}
+Take a starting configuration $q_S=(\pi/2,1.5)$ and a goal configuration
+$q_G=(3\pi/2,1.5)$, with the extension in meters. Their task positions
+are $\xi_S=(1.5,0)$ and $\xi_G=(-1.5,0)$.
+
+A straight segment between these task points passes through the origin,
+where $q_2=0$ would be needed. It therefore leaves the reachable set.
+Its endpoints are reachable, but its intermediate points are not all
+reachable.
+
+Instead, interpolate the configuration coordinates:
+\[
+ q(\lambda)=\begin{bmatrix}\pi/2+\pi\lambda\\1.5\end{bmatrix},
+ \qquad0\le\lambda\le1.
+\]
+Every point of this horizontal segment stays within the joint limits.
+The resulting tool path is
+\begin{equation}
+ f(q(\lambda))=
+ \begin{bmatrix}1.5\cos(\pi\lambda)\\1.5\sin(\pi\lambda)\end{bmatrix},
+ \label{eq:l11-arc}
+\end{equation}
+the upper semicircle of radius $1.5\,\mathrm m$.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture11/path-comparison}
+\caption{The dashed task-space segment crosses unreachable positions.
+The solid configuration-space segment maps to the solid circular tool
+path. Straight interpolation in one space need not be straight in the
+other. This comparison assumes no collision obstacles.}
+\label{fig:l11-paths}
+\end{figure}
+
+The rectangle of independent joint intervals is convex: every segment
+between its points remains in it. This property applies to this coordinate
+domain, not to every configuration space or free space. Periodic joints,
+closed-chain constraints, and obstacles require additional care. Likewise,
+being inside the joint limits does not establish collision freedom or
+dynamic feasibility.
+
+\section{Obstacles exclude configurations}
+An obstacle occupies a region $\mathcal O$ of physical space. Let
+$\mathcal A(q)$ be the physical region occupied by the robot at configuration
+$q$. With contact treated as collision, the configuration-space obstacle is
+\begin{equation}
+ \mathcal C_{\mathrm{obs}}=
+ \{q\in\mathcal C:\mathcal A(q)\cap\mathcal O\ne\varnothing\},
+ \qquad
+ \mathcal C_{\mathrm{free}}=\mathcal C\setminus\mathcal C_{\mathrm{obs}}.
+ \label{eq:l11-cobs}
+\end{equation}
+Self-collision constraints can be excluded in the same way. In this
+representation the robot configuration is a point, while the robot's
+shape is incorporated into the forbidden set.
+
+For an idealized point tool, one can instead test $f(q)\in\mathcal O$.
+For example, a disk of radius $\rho$ centered at $(x_o,y_o)$ excludes
+the RP tool configurations satisfying
+\[
+ (q_2\sin q_1-x_o)^2+(-q_2\cos q_1-y_o)^2\le\rho^2.
+\]
+This generally produces a curved boundary in $(q_1,q_2)$ coordinates.
+It is only a tool-point collision test: a link or slider can collide
+even when its endpoint lies outside the obstacle. Full-arm planning must
+use the robot's occupied geometry, not just this task map.
+
+Planning in configuration space checks candidate paths against
+$\mathcal C_{\mathrm{free}}$. Planning in task space must additionally
+ensure a consistent, admissible configuration exists along the task path.
+The choice of representation can simplify a problem, but does not remove
+its reachability, collision, or motion constraints.
+
+\clearpage
+\section{Additional exercises}
+\begin{enumerate}
+\item \textbf{Configuration or task?} Give a configuration vector and
+a position-only task vector for a planar mobile robot and for a fixed-base
+RR arm. Explain why their dimensions can differ and why configuration
+alone is not a complete dynamic state.
+
+\item \textbf{Selecting outputs.} Specify suitable task coordinates for
+altitude hold, positioning a gripper, and keeping a container upright.
+Which orientation components can be left unspecified in each case?
+
+\item \textbf{RP direct kinematics.} Reconstruct the two local DH matrices
+and multiply them to obtain Equation~\eqref{eq:l11-rp-H}. Identify the
+directions of $x_2$ and $z_2$ at $q_1=0$ and $q_1=\pi/2$.
+
+\item \textbf{Mapping a configuration.} For $q_1=\pi/4$ and
+$q_2=1.5\,\mathrm m$, calculate the RP tool position. State its distance
+and polar bearing from the base. Explain the $\pi/2$ offset between the
+joint coordinate and the tool bearing.
+
+\item \textbf{Changed limits.} Replace the RP limits by
+$0\le q_1\le\pi$ and $0.5\le q_2\le1.5$ meters. Sketch the configuration
+rectangle and its reachable task set. Map all four corners and identify
+the inner and outer arcs.
+
+\item \textbf{Comparing paths.} For the start and goal in
+Section~\ref{sec:l11-straight}, calculate both path midpoints: the midpoint
+of the task-space segment and the image of the configuration-space
+midpoint. Which is reachable under the stated limits? Give a reason why
+neither calculation alone establishes full-arm collision freedom.
+
+\item \textbf{A point-tool obstacle.} For the RP model, take a disk
+centered at $(1.8,0)\,\mathrm m$ with radius $0.2\,\mathrm m$. At
+$q_1=\pi/2$, find the forbidden interval of $q_2$ under the point-tool
+model, treating contact as collision. Explain why a full-link collision
+test could forbid additional configurations.
+\end{enumerate}

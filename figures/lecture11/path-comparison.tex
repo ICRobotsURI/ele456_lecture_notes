@@ -1,0 +1,22 @@
+\begin{tikzpicture}[scale=1.05]
+\filldraw[fill=blue!8,draw=blue!40] (0,-2) arc(-90:180:2)--(-1,0) arc(180:-90:1)--cycle;
+\draw[axis] (-2.4,0)--(2.5,0) node[right] {$x$};
+\draw[axis] (0,-2.3)--(0,2.5) node[above] {$y$};
+\draw[red!75!black,very thick,dashed,->] (1.5,0)--(-1.5,0);
+\draw[green!45!black,very thick,->] (1.5,0) arc(0:180:1.5);
+\fill (1.5,0) circle(.05) node[below] {$S$};
+\fill (-1.5,0) circle(.05) node[below] {$G$};
+\node at (0,-2.8) {Task space};
+\begin{scope}[shift={(5,0)},y=1.5cm]
+\filldraw[fill=blue!8,draw=blue!40] (0,1) rectangle (3,2);
+\draw[axis] (0,0)--(3.7,0) node[right] {$q_1$};
+\draw[axis] (0,0)--(0,2.5) node[above] {$q_2$};
+\foreach \x/\t in {1/{\pi/2},2/{\pi},3/{3\pi/2}} {
+\draw[projection] (\x,0)--(\x,2);\node[below] at (\x,0) {$\t$};}
+\foreach \y in {1,1.5,2} \node[left] at (0,\y) {$\y$};
+\draw[very thick,green!45!black,->] (1,1.5)--(3,1.5);
+\fill (1,1.5) circle(.05) node[above] {$S$};
+\fill (3,1.5) circle(.05) node[above left] {$G$};
+\node at (1.5,-1.87) {Configuration space};
+\end{scope}
+\end{tikzpicture}

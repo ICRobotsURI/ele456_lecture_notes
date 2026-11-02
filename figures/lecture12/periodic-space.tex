@@ -1,0 +1,14 @@
+\begin{tikzpicture}[scale=.85]
+\filldraw[fill=blue!5,thick] (-3,-3) rectangle (3,3);
+\draw[axis] (-3.6,0)--(3.7,0) node[right] {$q_1$};
+\draw[axis] (0,-3.6)--(0,3.7) node[above] {$q_2$};
+\node[below left] at (-3,0) {$-\pi$};\node[below right] at (3,0) {$\pi$};
+\node[above left] at (0,3) {$\pi$};\node[below left] at (0,-3) {$-\pi$};
+\foreach \x in {-3,3} \draw[blue!70!black,very thick,->] (\x,-1.8)--(\x,-.8);
+\foreach \y in {-3,3} \draw[red!70!black,very thick,->] (.8,\y)--(1.8,\y);
+\fill (2.83,1) circle(.06) node[above left] {$170^\circ$};
+\fill (-2.83,1) circle(.06) node[above right] {$-170^\circ$};
+\draw[green!45!black,very thick,->] (2.83,1)--(3.5,1);
+\draw[green!45!black,very thick,->] (-3.5,1)--(-2.83,1);
+\node[align=center] at (0,-4.1) {Matching edge arrows indicate periodic identification.};
+\end{tikzpicture}

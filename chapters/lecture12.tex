@@ -1,0 +1,345 @@
+\chapter{Paths and trajectory timing}
+\label{chap:lecture12}
+A geometric route does not specify how fast a robot should move along it.
+The same route can be followed slowly or quickly, with gradual starts and
+stops or abrupt changes in the requested velocity. Motion planning must
+therefore distinguish the geometry of a path from its timing. This chapter
+first considers motion without obstacles, then examines the velocity and
+acceleration requirements of the resulting trajectories.
+
+\section{Angular coordinates and configuration-space plots}
+Consider a planar RR arm with unrestricted revolute joints. A convenient
+coordinate representation is
+\[
+ q_1,q_2\in(-\pi,\pi].
+\]
+The half-open interval avoids storing both $-\pi$ and $+\pi$ as distinct
+representatives of the same angular configuration. Each angle is periodic;
+crossing the right edge of a coordinate plot brings its representative
+back to the left edge. The same applies to the top and bottom edges.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture12/periodic-space}
+\caption{A coordinate square for two unrestricted revolute joints.
+Opposite edges represent matching configurations. The short motion across
+the angular boundary appears as two pieces in this plot, although the
+physical joint motion is continuous. The interval convention selects one
+representative at each boundary.}
+\label{fig:l12-periodic}
+\end{figure}
+
+The square is a representation of the periodic configuration space, not
+a pair of mechanical stops. With both joints unrestricted, its topology
+is a torus, $S^1\times S^1$. A joint with physical stops instead has an
+interval of admissible motion, and those stops cannot be crossed merely
+by wrapping the angle numerically.
+
+For example, moving from $170^\circ$ to $-170^\circ$ can be a positive
+$20^\circ$ rotation for an unrestricted joint. Directly subtracting the
+stored representatives gives $-340^\circ$. Either represents a route to
+the same final orientation, but they describe different motions. Choose
+an unwrapped displacement consistent with the desired route and constraints,
+then normalize coordinates for display if needed. Accumulated turns may
+also matter when cables or other physical constraints are present.
+
+\section{A path specifies geometry and order}
+A \emph{path} describes the configurations or task values to be traversed,
+including their order, without specifying the traversal times. Represent
+a configuration path by
+\begin{equation}
+ q:[0,1]\longrightarrow\mathcal C,\qquad
+ q(0)=q_S,\quad q(1)=q_G.
+ \label{eq:l12-path}
+\end{equation}
+The parameter $\lambda\in[0,1]$ is dimensionless progress along the path;
+it is not time. The set of visited points is the path's geometric image,
+but a parameterized curve also records how those points are ordered.
+
+For a segment in a chosen coordinate domain, let $\Delta q=q_G-q_S$.
+Then
+\begin{equation}
+ \boxed{q(\lambda)=q_S+\Delta q\,\lambda
+ =(1-\lambda)q_S+\lambda q_G.}
+ \label{eq:l12-segment}
+\end{equation}
+Componentwise, $q_i(\lambda)=q_{iS}+\Delta q_i\lambda$. All joints use
+the same progress parameter to trace this particular straight segment.
+
+As an example, take
+\[
+ q_S=\begin{bmatrix}\pi/6\\\pi/4\end{bmatrix},\qquad
+ q_G=\begin{bmatrix}\pi/2\\-\pi/2\end{bmatrix},\qquad
+ \Delta q=\begin{bmatrix}\pi/3\\-3\pi/4\end{bmatrix}.
+\]
+The midpoint is $q(1/2)=(\pi/3,-\pi/8)\trans$. The first joint increases
+while the second decreases. Both remain inside the plotted coordinate
+intervals, although collision checking would still be needed if obstacles
+were present.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture12/joint-segment}
+\caption{Straight interpolation in the joint coordinates for the stated
+RR start and goal. The parameter $\lambda$ selects a configuration on the
+segment. Its timing has not yet been assigned.}
+\label{fig:l12-segment}
+\end{figure}
+
+A Cartesian position segment can be parameterized in the same way.
+However, its intermediate points must be reachable, and an admissible
+joint path must realize them. Orientation interpolation requires a
+representation appropriate to rotations; interpolating arbitrary rotation
+matrix entries does not generally preserve a valid rotation.
+For a differential-drive robot, a geometric pose path must also respect
+its velocity constraints. Coordinate interpolation alone does not establish
+that the robot can execute a motion.
+
+\section{A trajectory adds a timing law}
+A \emph{timing law} assigns progress as a function of time:
+\[
+ \lambda=\lambda(t),\qquad \lambda(0)=0,\qquad\lambda(T)=1.
+\]
+For a forward traversal choose $0\le\lambda(t)\le1$ with
+$\dot\lambda(t)\ge0$. The trajectory is the composition
+\begin{equation}
+ q_d(t)=q(\lambda(t)),\qquad0\le t\le T.
+ \label{eq:l12-trajectory}
+\end{equation}
+The subscript $d$ emphasizes that this is a desired motion for a controller
+to track. The actual measured configuration need not equal it exactly.
+
+\subsection{Linear timing}
+The simplest timing law is $\lambda(t)=t/T$, giving
+\begin{equation}
+ q_{i,d}(t)=q_{iS}+\Delta q_i\frac{t}{T}.
+ \label{eq:l12-linear}
+\end{equation}
+For the first joint of the example, choose $T=10\,\mathrm s$:
+\[
+ q_{1,d}(t)=\frac\pi6+\frac\pi3\frac{t}{10\,\mathrm s}.
+\]
+It starts at $30^\circ$ and ends at $90^\circ$. The displacement is
+$\pi/3$, or $60^\circ$; the final angle is $\pi/2$, not $\pi/3$.
+
+\subsection{Samples for a digital controller}
+At a control interval $\Delta t$, evaluate the reference at timestamps
+$t_k=k\Delta t$. With $\Delta t=0.5\,\mathrm s$, the example gives
+\begin{center}
+\begin{tabular}{rrrr}
+\toprule
+$k$ & $t_k$ (s) & $\lambda(t_k)$ & $q_{1,d}(t_k)$ (degrees)\\
+\midrule
+0 & 0 & 0 & 30\\
+1 & 0.5 & 0.05 & 33\\
+2 & 1 & 0.10 & 36\\
+3 & 1.5 & 0.15 & 39\\
+10 & 5 & 0.50 & 60\\
+20 & 10 & 1 & 90\\
+\bottomrule
+\end{tabular}
+\end{center}
+There are 21 samples including both endpoints. The $0.5\,\mathrm s$
+interval is illustrative, not a recommended motor-control rate.
+
+Software can evaluate the analytical formula directly at each control
+step; symbolic algebra is not required. Alternatively, it can store a
+table of reference values and timestamps. Either representation needs a
+defined update and interpolation policy. If $T$ is not an integer multiple
+of $\Delta t$, include the final timestamp explicitly or evaluate the
+clamped final reference at subsequent updates.
+
+The trajectory values are reference positions, not PWM commands. A
+controller compares them with measured motion and computes suitable
+actuator commands. Tracking error, sampling, and actuator limits remain
+part of the execution problem.
+
+\section{Why abrupt constant-speed starts are problematic}
+Suppose the joint is at rest before $t=0$ and again after $t=T$. Extending
+the linear reference outside the motion interval gives
+\[
+ q_d(t)=\begin{cases}
+ q_S,&t<0,\\
+ q_S+\Delta q\,t/T,&0\le t\le T,\\
+ q_G,&t>T.
+ \end{cases}
+\]
+For a scalar joint, its velocity is zero before and after the move and
+$\Delta q/T$ in the interior. The jumps at the endpoints require
+instantaneous changes in velocity.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture12/linear-profile}
+\caption{A linear position reference joined to stationary endpoints.
+Position is continuous, but velocity jumps at $0$ and $T$. The arrows in
+the acceleration plot represent ideal impulses, not finite acceleration
+peaks. The sketch shows a positive displacement.}
+\label{fig:l12-linear-profile}
+\end{figure}
+
+In the distributional sense, the acceleration is
+\[
+ \ddot q_d(t)=\frac{\Delta q}{T}\bigl[\delta(t)-\delta(t-T)\bigr].
+\]
+The Dirac delta is an ideal impulse with a specified integral, not an
+ordinary finite-valued acceleration at one instant. A real actuator with
+finite torque and a load with inertia cannot follow these velocity jumps
+exactly. It needs time to accelerate and brake. The resulting tracking
+behavior depends on the controller and system dynamics; overshoot is a
+possibility, not an unavoidable outcome for every implementation.
+
+Available acceleration depends on torque, inertia, loading, transmission,
+and speed-dependent limits. Motor power alone does not specify a constant
+joint-acceleration bound. For trajectory design, a simplified model can
+nevertheless use conservative velocity and acceleration limits.
+
+\section{Acceleration, cruising, and braking}
+\label{sec:l12-trapezoid}
+A common rest-to-rest motion uses constant acceleration, an optional
+constant-speed interval, and constant deceleration. Integrating these
+three phases produces a trapezoidal velocity profile and a position
+profile that is quadratic, then linear, then quadratic.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture12/trapezoid-profile}
+\caption{A rest-to-rest profile with acceleration, cruising, and braking.
+Velocity is continuous; acceleration switches between finite levels.
+Position and velocity join continuously at $t_1$ and $t_2$. The acceleration
+and deceleration magnitudes need not be equal in general.}
+\label{fig:l12-trapezoid}
+\end{figure}
+
+\subsection{A scalar construction}
+The following formulas make the three-phase construction explicit. Let
+$D=|q_G-q_S|>0$ and $\sigma=\operatorname{sign}(q_G-q_S)$.
+Write $q_d(t)=q_S+\sigma u(t)$, where progress $u$ increases from 0 to $D$.
+Let $A>0$ be the acceleration limit along the move, $B>0$ the braking
+magnitude, and $V>0$ the speed limit. Suppose the peak speed is $v_p$.
+The acceleration and braking times are
+\[
+ t_a=\frac{v_p}{A},\qquad t_d=\frac{v_p}{B},
+\]
+and the distances used by those phases are $v_p^2/(2A)$ and $v_p^2/(2B)$.
+If the speed limit can be reached, set $v_p=V$ and
+\begin{equation}
+ t_c=\frac{D-V^2/(2A)-V^2/(2B)}{V}\ge0,
+ \quad t_1=t_a,\quad t_2=t_a+t_c,\quad T=t_a+t_c+t_d.
+ \label{eq:l12-times}
+\end{equation}
+The resulting progress is
+\begin{equation}
+ u(t)=\begin{cases}
+ \tfrac12At^2,&0\le t\le t_1,\\
+ \dfrac{v_p^2}{2A}+v_p(t-t_1),&t_1\le t\le t_2,\\
+ D-\tfrac12B(T-t)^2,&t_2\le t\le T.
+ \end{cases}
+ \label{eq:l12-piecewise}
+\end{equation}
+The overlapping endpoint definitions agree. The associated timing law is
+$\lambda(t)=u(t)/D$. The velocity ramps from zero to $v_p$, remains at
+$v_p$ during cruising, and returns to zero during braking.
+
+\subsection{Short moves: triangular velocity}
+If $D<V^2/(2A)+V^2/(2B)$, there is insufficient distance to reach $V$
+and still stop at the target. Set $t_c=0$ and solve for the lower peak speed:
+\begin{equation}
+ v_p=\sqrt{\frac{2DAB}{A+B}}<V.
+ \label{eq:l12-triangle}
+\end{equation}
+The velocity profile is triangular. Acceleration switches directly from
+$+A$ to $-B$; this is the two-phase bang-bang case. The trapezoidal case
+adds a zero-acceleration cruise interval and is often called
+bang-coast-bang. Both are idealized profiles with jumps in acceleration;
+a jerk-limited design would smooth those changes further.
+
+These profiles give minimum-time rest-to-rest scalar motion under the
+stated constant speed and acceleration bounds, without a jerk bound or
+additional constraints. This does not establish global time optimality
+for a coupled robot with configuration-dependent torque limits.
+
+\subsection{Worked example}
+Move from $30^\circ$ to $90^\circ$, so $D=60^\circ$. For easy numerical
+interpretation use degrees here, with $V=15^\circ/\mathrm s$ and
+$A=B=15^\circ/\mathrm s^2$. Equivalently, each limit has numerical
+factor $\pi/12$ in radian units. Then
+\[
+ t_a=t_d=1\,\mathrm s,\qquad
+ t_c=\frac{60-7.5-7.5}{15}=3\,\mathrm s,\qquad T=5\,\mathrm s.
+\]
+With $t$ measured in seconds and $q_d$ in degrees,
+\[
+ q_d(t)=\begin{cases}
+ 30+7.5t^2,&0\le t\le1,\\
+ 37.5+15(t-1),&1\le t\le4,\\
+ 90-7.5(5-t)^2,&4\le t\le5.
+ \end{cases}
+\]
+The joint reaches $37.5^\circ$ at 1 s, begins braking at $82.5^\circ$
+at 4 s, and reaches $90^\circ$ at rest at 5 s. The area under the velocity
+curve is $7.5+45+7.5=60^\circ$, as required. This is a different timing
+choice from the earlier 10-second linear example, for the same endpoints.
+
+\section{Coordinating several joints}
+For the straight joint path, a shared timing law gives
+\begin{equation}
+ \dot q_{i,d}=\Delta q_i\dot\lambda,\qquad
+ \ddot q_{i,d}=\Delta q_i\ddot\lambda.
+ \label{eq:l12-shared}
+\end{equation}
+All joints finish together and preserve the selected configuration-space
+segment. Under symmetric individual speed bounds $V_i$ and acceleration
+magnitude bounds $A_i$, a sufficient choice is
+\[
+ |\dot\lambda|\le\min_{\Delta q_i\ne0}\frac{V_i}{|\Delta q_i|},\qquad
+ |\ddot\lambda|\le\min_{\Delta q_i\ne0}\frac{A_i}{|\Delta q_i|}.
+\]
+A joint with $\Delta q_i=0$ remains fixed and is omitted from these ratios.
+Mixed revolute and prismatic units are consistent because each bound is
+divided by that joint's own displacement. If all displacements are zero,
+the reference simply remains at the starting configuration.
+
+Assigning unrelated timing laws to separate joints generally changes the
+path through configuration space, even if every joint eventually reaches
+its target. For a curved path the derivatives also involve the path's
+geometry, so the simple expressions above no longer suffice.
+
+Geometric collision checking and timing design address different parts
+of the motion problem. A smooth timing law cannot repair a path that
+collides with a static obstacle. Conversely, a collision-free geometric
+path still needs feasible timing and a controller that can track it.
+
+\clearpage
+\section{Additional exercises}
+\begin{enumerate}
+\item \textbf{Angle wrapping.} An unrestricted revolute joint starts at
+$170^\circ$ and must finish at $-170^\circ$. Write both the direct
+coordinate difference and the short positive displacement. Explain why
+the latter is not permitted if mechanical stops are at $\pm175^\circ$.
+
+\item \textbf{A joint-space segment.} For the RR start and goal in this
+chapter, compute $q(0)$, $q(1/2)$, and $q(1)$. Explain why a straight
+joint-space segment need not produce a straight tool path.
+
+\item \textbf{Sampled reference.} For $q_{1,d}(t)=\pi/6+(\pi/3)t/10$
+with $t$ in seconds, calculate the references at $t=2$, 5, and 8 s. How
+many samples include both endpoints when $\Delta t=0.5\,\mathrm s$?
+Distinguish these reference values from actuator commands.
+
+\item \textbf{Derivative interpretation.} Sketch position, velocity,
+and acceleration for a negative displacement with linear timing and
+stationary endpoints. State the signs and strengths of the ideal
+acceleration impulses.
+
+\item \textbf{Trapezoidal motion.} Reproduce the $30^\circ$ to $90^\circ$
+worked example. Verify position and velocity continuity at 1 s and 4 s,
+and confirm the traveled angle from the velocity-curve area.
+
+\item \textbf{A short move.} Keep $V=15^\circ/\mathrm s$ and
+$A=B=15^\circ/\mathrm s^2$, but reduce the displacement to $10^\circ$.
+Determine whether cruising occurs, then compute the peak speed and total
+duration. Check that the velocity-curve area equals the displacement.
+
+\item \textbf{Shared timing.} Two joints move by $\pi/3$ radians and
+$0.4\,\mathrm m$. Their speed bounds are $\pi/6\,\mathrm{rad/s}$ and
+$0.1\,\mathrm{m/s}$. Find the bound on $\dot\lambda$ for a shared
+straight path. Which joint sets it? Explain why this speed calculation
+alone does not ensure rest-to-rest feasibility.
+\end{enumerate}

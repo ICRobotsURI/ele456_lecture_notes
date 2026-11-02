@@ -1,0 +1,19 @@
+\begin{tikzpicture}[scale=1.05]
+\filldraw[fill=blue!8,draw=blue!55] (0,-2) arc(-90:180:2)--(-1,0) arc(180:-90:1)--cycle;
+\draw[axis] (-2.5,0)--(2.6,0) node[right] {$x$};
+\draw[axis] (0,-2.5)--(0,2.6) node[above] {$y$};
+\foreach \x/\y/\l/\a in {0/-1/A/right,0/-2/B/right,-1/0/C/below,-2/0/D/below,0/1/E/left,0/2/F/left,1/0/L/below,2/0/M/below}
+ {\fill (\x,\y) circle(.045);\node[\a] at (\x,\y) {\l};}
+\node at (0,-3) {Reachable position (m)};
+\begin{scope}[shift={(5,0)},x=1cm,y=1.5cm]
+\filldraw[fill=blue!8,draw=blue!55] (0,1) rectangle (3,2);
+\draw[axis] (-.3,0)--(3.7,0) node[right] {$q_1$};
+\draw[axis] (0,-.2)--(0,2.5) node[above] {$q_2$ (m)};
+\foreach \x/\t in {1/{\pi/2},2/{\pi},3/{3\pi/2}} {
+\draw[projection] (\x,0)--(\x,2);\node[below] at (\x,0) {$\t$};}
+\foreach \y in {1,2} \node[left] at (0,\y) {$\y$};
+\foreach \x/\y/\l/\a in {0/1/A/below right,0/2/B/above right,3/1/C/below,3/2/D/above,2/1/E/below,2/2/F/above,1/1/L/below,1/2/M/above}
+ {\fill (\x,\y) circle(.04);\node[\a] at (\x,\y) {\l};}
+\node at (1.5,-2) {Configuration coordinates};
+\end{scope}
+\end{tikzpicture}

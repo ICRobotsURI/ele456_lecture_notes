@@ -67,11 +67,22 @@ the intermediate-frame derivation, and a procedure for building the forward
 map. Lecture 12 adds special frame choices, complete planar RR and spatial
 RRP examples, and a coaxial RP illustration. Eight vector figures and
 twenty-one exercises support the chapter's geometric and matrix models.
+Chapter 11, "Configuration and task spaces," draws on both deliveries of
+lecture 13. It develops configuration and task coordinates, the RP forward
+map, joint limits, reachable sets, and the meaning of configuration-space
+obstacles. Four vector diagrams and seven exercises connect the coordinate
+rectangle with the reachable annular sector.
+Chapter 12, "Paths and trajectory timing," draws on both deliveries of
+lecture 14. It distinguishes paths from trajectories, treats periodic joint
+coordinates and sampled references, and develops trapezoidal and triangular
+velocity profiles. Four vector diagrams, a worked timing example, and seven
+exercises accompany the derivations.
 
 For correspondence with the classes, lecture 10 covers Sections 10.1--10.6;
 lecture 11 covers Sections 10.7--10.10; lecture 12 covers Sections
 10.11--10.13. Section 10.14 groups the exercises into arm kinematics,
 DH fundamentals, and DH examples/special cases.
+Lectures 13 and 14 correspond to Chapters 11 and 12, respectively.
 Appendix A collects the rotation-conversion reference formulas, including
 scalar-first unit quaternions and singular-case notes.
 
@@ -105,6 +116,8 @@ On Overleaf, upload the project and select `main.tex` as the main document.
 - `chapters/lecture10.tex`: Chapter 10, robotic arms and direct kinematics.
 - `chapters/lecture10-dh.tex`: DH sections of Chapter 10, sourced from lecture 11.
 - `chapters/lecture10-dh-examples.tex`: special cases and worked DH examples from lecture 12.
+- `chapters/lecture11.tex`: Chapter 11, configuration and task spaces, from lecture 13.
+- `chapters/lecture12.tex`: Chapter 12, paths and trajectory timing, from lecture 14.
 - `appendices/rotation-conversions.tex`: conversion reference adapted from the supplied handout.
 - `figures/lecture02/`: vector diagrams drawn in TikZ and included by the chapter.
 - `figures/lecture03/`: diagrams for affine and homogeneous transformations.
@@ -115,13 +128,15 @@ On Overleaf, upload the project and select `main.tex` as the main document.
 - `figures/lecture08/`: actuation chain, PWM, cylinder, transmission, and encoder diagrams.
 - `figures/lecture09/`: drive geometry, motion cases, velocity projection, integration, sampling, and drift diagrams.
 - `figures/lecture10/`: joint symbols, serial-chain topology, planar RR geometry, workspace, DH frame geometry, and RR/RRP/coaxial examples.
+- `figures/lecture11/`: configuration descriptions, RP frames, mapped spaces, and path comparison.
+- `figures/lecture12/`: periodic coordinates, joint interpolation, and motion profiles.
 - `chapters/lecture-template.tex`: starting point for future lectures.
 - `lectures/`: original boards and transcripts (local only, excluded from Git).
 - `editorial-notes.md`: source decisions and details requiring confirmation.
 
 ## Add a lecture
 
-1. Put the next board material and transcript in `lectures/13/`, then `14/`, etc.
+1. Put the next board material and transcript in `lectures/15/`, then `16/`, etc.
 2. Assign each topic to the appropriate chapter, extending an existing chapter
    when a class continues that topic. Record the source mapping in `editorial-notes.md`.
 3. Extend the appropriate chapter when a topic continues. For new
