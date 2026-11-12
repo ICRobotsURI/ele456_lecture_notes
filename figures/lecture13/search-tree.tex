@@ -1,0 +1,10 @@
+\begin{tikzpicture}[x=1.2cm,y=.6cm,n/.style={circle,draw,fill=white,minimum size=6mm}]
+\foreach \i/\x/\y/\g in {5/0/0/0,4/0/-1.4/3,3/-1/-2.8/4,6/2/-2.8/13,2/-1/-4.2/10,1/-2/-5.6/14,7/0/-5.6/15,8/-2/-7/19,9/-2/-8.4/25,10/-2.8/-9.8/28,11/-.6/-9.8/27,12/3/-4.2/23} {
+\node[n] (n\i) at (\x,\y) {$\i$};
+\node[right,blue!70!black] at (n\i.east) {$\g$};}
+\foreach \a/\b in {5/4,4/3,4/6,3/2,2/1,2/7,1/8,8/9,9/10,9/11,6/12}
+ \draw[->] (n\a)--(n\b);
+\foreach \a/\b in {5/4,4/3,3/2,2/1,1/8,8/9,9/10}
+ \draw[->,red!70!black,thick] (n\a)--(n\b);
+\draw[->,dashed,gray] (n12) to[out=-90,in=-70] node[right,align=left,text=black] {old route to 11:\\cost 38} (n11.south);
+\end{tikzpicture}

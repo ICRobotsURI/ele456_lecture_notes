@@ -1,0 +1,377 @@
+\chapter{Configuration-space obstacles and path planning}
+\label{chap:lecture13}
+A configuration-space obstacle collects all robot placements that collide
+with a physical obstacle. Once these forbidden configurations are known,
+geometric planning becomes the problem of connecting two points through
+the free region. This chapter develops a manual construction for an RP
+arm, obstacle enlargement for a circular mobile robot, and a first roadmap
+method based on a generalized Voronoi diagram.
+
+\section{Constructing C-obstacles for an RP arm}
+\subsection{Geometry and coordinate convention}
+Model a planar rotational--prismatic arm as a thin segment from a fixed
+base to its tool. The tool is a point; the joint and gripper symbols do not
+add occupied area to this simplified model. Collision is checked against
+the \emph{whole segment}, including contact with an obstacle boundary.
+
+In this example, $q_1$ is measured directly from the positive world $x$
+axis to the arm, and $q_2$ is its length. Thus
+\begin{equation}
+ p(q)=\begin{bmatrix}q_2\cos q_1\\q_2\sin q_1\end{bmatrix},\qquad
+ \mathcal A(q)=\{s(\cos q_1,\sin q_1):0\le s\le q_2\}.
+ \label{eq:l13-rp}
+\end{equation}
+This angular zero differs from the DH example in
+Section~\ref{sec:l11-rp}: here $q_1$ is the arm bearing; there the bearing
+was $q_1-\pi/2$. The geometric definition, rather than the symbol name,
+determines the correct trigonometric expressions.
+
+Take mechanical joint limits
+\[
+ -\pi\le q_1\le\pi,\qquad 0\le q_2\le2.5\,\mathrm m.
+\]
+Treat the endpoints of the angular interval as stops for this example.
+Although their geometric orientations coincide, motion cannot pass through
+a mechanical stop. The configuration plot is a rectangle, with angle on
+the horizontal axis and extension on the vertical axis.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture13/rp-obstacles}
+\caption{The RP arm modeled as a segment, with two rectangular obstacles.
+The corresponding C-obstacles extend upward from the first-contact curves
+to the extension limit. The right panel enlarges the relevant angular
+interval; the rest of the joint domain is free for these obstacles.}
+\label{fig:l13-rp}
+\end{figure}
+
+\subsection{From contact points to forbidden regions}
+Let the first obstacle occupy $1\le x\le2$, $0\le y\le0.5$ meters.
+Its near corners are $B=(1,0)$ and $A=(1,0.5)$. A tool position $(x,y)$
+in this quadrant gives
+\[
+ q_1=\operatorname{atan2}(y,x),\qquad q_2=\sqrt{x^2+y^2}.
+\]
+For $B$, the configuration is $(0,1)$. For $A$,
+\[
+ q_2=\sqrt{1^2+0.5^2}\approx1.118\,\mathrm m,\qquad
+ q_1=\arctan(0.5)\approx0.464\,\mathrm{rad}=26.565^\circ.
+\]
+One can also use $q_1=\arccos(1/q_2)$ here because the quadrant is known.
+The $\operatorname{atan2}$ expression retains the quadrant information
+when points elsewhere in the plane are considered.
+
+The visible face $AB$ lies on $x=1$. Its contact configurations satisfy
+\begin{equation}
+ q_{2,\mathrm{touch}}(q_1)=\frac{1}{\cos q_1},\qquad
+ 0\le q_1\le\arctan(0.5),
+ \label{eq:l13-first}
+\end{equation}
+with lengths in meters. Consequently the straight physical edge maps to
+a curved boundary. A hand sketch may join a few computed samples, but
+joining the endpoints is an approximation, not an exact transformation.
+
+At any fixed angle in this interval, increasing $q_2$ beyond first contact
+leaves the arm intersecting the obstacle. Even if the tool emerges beyond
+the far face, the segment behind it still crosses the obstacle. Therefore
+\begin{equation}
+ \mathcal C_{\mathrm{obs},1}=
+ \left\{(q_1,q_2):0\le q_1\le\arctan(0.5),\quad
+ \frac{1}{\cos q_1}\le q_2\le2.5\right\}.
+ \label{eq:l13-cobs1}
+\end{equation}
+This explains why the region \emph{above} the contact curve is shaded.
+The far corners do not create an additional lower boundary: their
+configurations already belong to the forbidden region.
+
+\subsection{A second obstacle with two visible faces}
+Let the second obstacle occupy $0.5\le x\le1$, $1\le y\le1.5$ meters.
+The near boundary changes from its bottom face to its left face. Three
+points identify that change:
+\begin{center}
+\begin{tabular}{ccrr}
+\toprule
+Point & $(x,y)$ (m) & $q_1$ (rad) & $q_2$ (m)\\
+\midrule
+$A$ & $(1,0.5)$ & $0.464$ & $1.118$\\
+$B$ & $(1,0)$ & $0$ & $1$\\
+$C$ & $(0.5,1.5)$ & $1.249$ & $1.581$\\
+$D$ & $(0.5,1)$ & $1.107$ & $1.118$\\
+$E$ & $(1,1)$ & $0.785$ & $1.414$\\
+\bottomrule
+\end{tabular}
+\end{center}
+For increasing angle, the first-contact boundary runs from $E$ to $D$
+and then from $D$ to $C$. On $ED$, $y=1$; on $DC$, $x=0.5$. Thus
+\begin{equation}
+ q_{2,\mathrm{touch}}(q_1)=
+ \begin{cases}
+ 1/\sin q_1,&\pi/4\le q_1\le\arctan 2,\\
+ 0.5/\cos q_1,&\arctan 2\le q_1\le\arctan 3.
+ \end{cases}
+ \label{eq:l13-second}
+\end{equation}
+Shade from this curve upward to $q_2=2.5$. The far corner $F=(1,1.5)$
+is hidden behind a nearer face as viewed from the base; putting the tool
+there already makes the arm collide. The full forbidden set is the union
+of the contributions from both obstacles.
+
+\subsection{A procedure for a hand sketch}
+\begin{enumerate}
+\item Draw the joint-coordinate domain and its limits. State which parts
+of the robot occupy space and whether contact counts as collision.
+\item Identify angular extremes and changes of visible obstacle face.
+For this RP model, rays from the base through selected vertices provide
+useful first-contact configurations.
+\item Compute their joint coordinates, plot them, and trace the contact
+curves. Add intermediate samples where curvature is unclear.
+\item Determine the forbidden side: hold $q_1$ fixed and vary $q_2$.
+For this segment model, every extension beyond first contact is forbidden.
+Shade those intervals within the joint limits.
+\item Combine the obstacles and check representative configurations in
+both the shaded and unshaded regions by drawing the robot in physical space.
+\end{enumerate}
+The last two steps distinguish a C-obstacle construction from merely
+mapping obstacle vertices. Other robot geometries may have several
+collision intervals along one coordinate slice; the upward-shading rule
+is specific to this extending segment. A finite-width arm also requires
+its width to be included in the collision model.
+
+\section{A circular robot: enlarge the obstacles}
+For a disk-shaped robot of radius $r$ moving in the plane, the occupied
+region depends on its center $(x,y)$ but not on heading. Collision geometry
+can therefore be represented in a two-dimensional position space, even
+when the robot's motion model also contains an orientation variable.
+
+If $\mathcal O$ is a physical obstacle, its forbidden center positions are
+\begin{equation}
+ \mathcal C_{\mathrm{obs}}=
+ \{p:\operatorname{dist}(p,\mathcal O)\le r\}
+ =\mathcal O\oplus B_r,
+ \label{eq:l13-inflation}
+\end{equation}
+where $B_r$ is the disk of radius $r$ centered at the origin and $\oplus$
+denotes the Minkowski sum, the set of sums of one point from each set.
+Geometrically, move each straight obstacle face outward by $r$ and join
+convex corners with circular arcs of radius $r$.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture13/inflation}
+\caption{A center path can miss the physical obstacle while the robot
+still collides (left). Enlarging the obstacle by the disk radius makes
+that same path intersect the forbidden region (right). The orange route
+clears the enlarged obstacle.}
+\label{fig:l13-inflation}
+\end{figure}
+
+A path for the center that stays strictly outside these enlarged obstacles
+avoids collision under the model. The footprint has been incorporated
+into the map, but the \emph{whole path} must still be checked against the
+forbidden region. Checking only its endpoints is insufficient.
+
+A noncircular robot can be enclosed in a disk centered at the chosen
+reference point. Enlarging obstacles using that radius is conservative:
+it can reject passages the actual robot could traverse in a suitable
+orientation. Representing orientation explicitly allows a less conservative
+model but generally requires a three-dimensional $(x,y,\theta)$ space.
+A further margin can account for bounded positioning or tracking errors.
+Map boundaries must also leave room for the robot body.
+
+\section{From a free region to a roadmap}
+Let $\mathcal C_{\mathrm{free}}=\mathcal C\setminus\mathcal C_{\mathrm{obs}}$.
+Given free start and goal configurations $q_S,q_G$, geometric path planning
+seeks a continuous curve in $\mathcal C_{\mathrm{free}}$ joining them.
+A timing law subsequently specifies how the robot traverses it, subject
+to its motion constraints. Corners or sharp curvature changes may require
+slowing, stopping, or smoothing before execution.
+
+A \emph{roadmap} replaces the continuous region with a network of curves
+that the robot can follow. Planning then has three parts: access the
+network from the start, travel along it, and leave it to reach the goal.
+Intersections become graph nodes and connecting curve segments become
+graph edges. Selecting a route through that graph is a separate search
+problem; constructing the roadmap alone does not select a unique route.
+
+\section{Generalized Voronoi roadmaps}
+\subsection{Equidistance to the nearest boundaries}
+In a planar free region, a generalized Voronoi roadmap follows points with
+two or more distinct nearest obstacle-boundary points. In a corridor,
+the centerline is equally far from its two walls. Domain boundaries can
+be treated as walls as well when they represent actual limits.
+
+The word \emph{nearest} matters. Being equally far from two distant
+obstacles does not put a point on the roadmap if a third obstacle is
+closer. For separate obstacle sites, branches satisfy
+\[
+ d_i(q)=d_j(q)=\min_k d_k(q),\qquad
+ d_i(q)=\operatorname{dist}(q,\mathcal O_i).
+\]
+Boundary features of the same nonconvex obstacle may also generate a
+branch. This boundary-based view is often called the medial axis of the
+free region.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture13/voronoi-features}
+\caption{Local equidistance constructions: a midline between parallel
+walls, an angle bisector between intersecting supporting lines, and a
+parabola between a vertex and an edge. Only portions for which the shown
+features are nearest belong to the roadmap.}
+\label{fig:l13-features}
+\end{figure}
+
+For polygonal obstacles, edge--edge portions can be straight, while a
+vertex--edge portion is parabolic. Two vertices generate a perpendicular
+bisector. Thus a curved part is not generally a circular arc. At a typical
+junction three nearest boundary features meet; special symmetric cases
+can produce higher-degree junctions.
+
+Distance requires a metric. Euclidean distance in a position map is
+measured in length units. If a plot mixes angles and extensions, a scaling
+or weighted metric must be chosen before interpreting equidistance.
+Clearance in such a coordinate metric is not directly a physical distance
+between the robot body and an obstacle.
+
+\subsection{Sketching and using the roadmap}
+\begin{enumerate}
+\item Draw the forbidden regions and domain boundaries. Sketch the
+midlines or angle bisectors between nearby faces.
+\item Follow changes in the closest boundary features. Add vertex--edge
+curves where needed, retaining only branches whose generating features
+are nearest.
+\item Join compatible branches and mark intersections. Check that the
+network stays inside the free region.
+\item Project $q_S$ and $q_G$ onto the diagram: choose closest points
+$r_S$ and $r_G$ anywhere on its branches, and connect them to the start
+and goal by straight segments. Check that these access segments are free.
+\item Find a network route from $r_S$ to $r_G$ and concatenate
+$q_S\to r_S\to r_G\to q_G$.
+\end{enumerate}
+Writing the diagram as $V$, the projection is
+\[
+ r_S\in\operatorname*{arg\,min}_{v\in V}\|v-q_S\|,\qquad
+ r_G\in\operatorname*{arg\,min}_{v\in V}\|v-q_G\|.
+\]
+The minimization is over the entire diagram, not just its intersections.
+A projection can lie inside a branch; split that graph edge at the
+projection when representing the query as a graph. If several points are
+equally close, the projection need not be unique. For an approximate or
+incomplete diagram, verify the straight access segments explicitly. If a
+connector is blocked, a different free access connection is needed.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture13/roadmap}
+\caption{A numerically approximated generalized Voronoi roadmap around three polygonal
+obstacles and the enclosing walls. Green branches form the network;
+the red route joins the projections $r_S$ and $r_G$ inside two branches,
+with dashed straight connections from the start and to the goal.
+Projections are closest points on the diagram, not nearest intersections.
+The branches are computed from densely sampled obstacle boundaries;
+straight and curved portions follow the nearest-boundary geometry.}
+\label{fig:l13-roadmap}
+\end{figure}
+
+Roadmaps based on clearance tend to keep a path away from nearby obstacle
+boundaries, which is useful when execution is imperfect. They do not in
+general give the shortest route, nor does every branch maximize clearance
+globally. Narrow passages still impose small clearance, and the access
+connections can approach obstacles more closely than the central route.
+Any guarantee also depends on the accuracy of the map and robot model.
+
+\input{chapters/lecture13-search}
+\input{chapters/lecture13-sampling}
+
+\clearpage
+\section{Additional exercises}
+\subsection{C-obstacles and Voronoi roadmaps}
+\begin{enumerate}
+\item \textbf{Angular zero.} Relate the angle in this chapter's RP model
+to the DH joint coordinate in Section~\ref{sec:l11-rp}. Verify that both
+descriptions give the same tool position after the coordinate change.
+\item \textbf{First-contact curve.} For obstacle 1, compute the contact
+extension at $q_1=0$, $0.2$, and $\arctan(0.5)$ radians. Sketch the curve
+and shade the C-obstacle. Classify $(q_1,q_2)=(0.2,0.9)$, $(0.2,1.5)$,
+and $(0.6,2)$.
+\item \textbf{Two visible faces.} Derive Equation~\eqref{eq:l13-second}
+and verify that its two expressions agree at $D$. Explain why the far
+corner $F$ does not create a new first-contact branch.
+\item \textbf{Tool versus whole arm.} At $q_1=0.2$ and $q_2=2.3$, show
+that the tool lies beyond obstacle 1 while the arm still intersects it.
+Sketch both the physical configuration and its point in configuration space.
+\item \textbf{A corridor.} A disk robot has radius $0.25\,\mathrm m$.
+For a corridor $0.8\,\mathrm m$ wide, determine the width available to
+its center. Repeat with an additional $0.05\,\mathrm m$ clearance margin
+on each side. Explain what happens at corridor width $2r$ when contact
+counts as collision.
+\item \textbf{A curved Voronoi branch.} For an obstacle vertex at $(0,2)$
+and an edge supported by $y=0$, derive the equal-distance curve in $y>0$.
+What additional condition must hold for this curve to belong to a roadmap
+when other obstacles are present?
+\item \textbf{A complete roadmap query.} Sketch two free start and goal
+points near a roadmap. Identify the two access paths and the network
+route. Explain why checking access endpoints alone is insufficient and
+why a clearance-oriented route need not be the shortest one.
+\end{enumerate}
+\clearpage
+\subsection{Graph search and cell decomposition}
+\begin{enumerate}
+\item \textbf{Graph representation.} Write the neighbor lists of nodes 2,
+4, 7, and 9 in Figure~\ref{fig:l13-weighted}. Explain how an undirected
+edge differs from a directed edge and what geometric information is needed
+to execute a graph path on a robot.
+\item \textbf{Cumulative costs.} Compare the costs of
+$5,4,6,7,8,9,10$ and $5,4,3,2,1,8,9,10$. Why can the route that looks
+shorter in a drawing have the larger assigned cost?
+\item \textbf{Relaxation.} Reproduce the Dijkstra trace. Identify when
+node 11 is first discovered and when its cost and predecessor change.
+Distinguish an open node from a settled node.
+\item \textbf{Stopping too early.} Set $w(9,11)=1$ and add the undirected
+edge $(11,10)$ of weight 1. Find the new optimal route and explain why
+stopping when node 10 is first discovered gives the wrong answer.
+\item \textbf{A heuristic.} If edge costs are physical path lengths,
+explain why straight-line distance to the goal is a lower bound. Does the
+same argument apply to arbitrary numerical weights? What does A* become
+when $h(n)=0$?
+\item \textbf{Cell connectivity.} Using Figure~\ref{fig:l13-cells}, write
+the neighbors of cells 2, 9, and 12. Find a different cell sequence from
+1 to 12 and construct a geometric path using free portal midpoints.
+\item \textbf{Same-side portals.} Consider the sequence $5,9,6$.
+Explain why directly joining its portal midpoints can lie along an obstacle
+boundary. Construct a valid detour through an interior point of cell 9.
+\end{enumerate}
+
+\clearpage
+\subsection{Approximate decomposition and sampling-based planning}
+\begin{enumerate}
+\item \textbf{Three resolutions.} Reproduce the cell classifications and
+connectivity graphs in Figure~\ref{fig:l13-quadtree}. Draw another route
+through empty cells in iteration 3 and transfer it to the map. Explain why
+the route in iteration 1 is not yet a certified solution.
+\item \textbf{An unresolved passage.} Draw two obstacles separated by a
+narrow passage. Give a grid resolution at which the passage lies inside
+mixed cells. Show how refinement can reveal it. Does an unsuccessful
+search on the coarse conservative graph prove that no path exists?
+\item \textbf{Node and edge tests.} Sketch a rectangular obstacle, six
+free samples, and one sample in collision. Choose a connection radius,
+draw every candidate edge within that radius, and cross out invalid edges.
+Insert a start and goal and identify a route, if one exists.
+\item \textbf{One RRT iteration.} The existing tree vertices are
+$(0,0)$, $(1,0)$, and $(1,1)$. Let $q_{\mathrm{rand}}=(4,1)$ and
+$d=1$. Find $q_{\mathrm{near}}$ and $q_{\mathrm{new}}$. Now place the
+obstacle $[1.4,1.6]\times[0.8,1.2]$ in the domain. Should the new vertex
+and edge be accepted? Explain why checking only the endpoint gives the
+wrong decision.
+\item \textbf{One tree or two.} Around a rectangular obstacle, sketch
+three generations of a local branching tree and then a bidirectional
+construction. Mark rejected extensions and show how parent pointers recover
+a solution after a valid connection. Must the bidirectional version always
+be faster or give a shorter path?
+\item \textbf{Three primitives.} Starting from $(x,y,\theta)=(0,0,0)$,
+use $v=1\,\mathrm{m/s}$ and $\Delta t=1\,\mathrm{s}$, with angular
+speeds $-\pi/2$, $0$, and $\pi/2$ radians per second.
+Compute and draw all three endpoint poses. For the goal pose $(2,2,\pi/2)$,
+compute the predecessor for each of these controls and draw its forward
+motion toward the goal.
+\item \textbf{Three distinct claims.} Explain the difference between
+a collision-free path, a minimum-cost path on a finite graph, and an
+asymptotically optimal planning method. Which claim follows directly from
+applying Dijkstra to a validated roadmap with nonnegative edge weights?
+\end{enumerate}

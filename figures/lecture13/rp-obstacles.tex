@@ -1,0 +1,38 @@
+\begin{tikzpicture}
+\begin{scope}[scale=1.65]
+\draw[axis] (0,0)--(2.45,0) node[right] {$x$};
+\draw[axis] (0,0)--(0,1.95) node[above] {$y$};
+\filldraw[fill=violet!12,draw=violet] (1,0) rectangle (2,.5);
+\filldraw[fill=violet!12,draw=violet] (.5,1) rectangle (1,1.5);
+\node at (1.5,.25) {$\mathcal O_1$};\node at (.75,1.25) {$\mathcal O_2$};
+\draw[thick,dashed,blue!65] (0,0)--(.5,1.5) (0,0)--(.5,1) (0,0)--(1,1) (0,0)--(1,.5);
+\begin{scope}[rotate=35]
+\draw[fill=gray!20] (.2,-.08) rectangle (.9,.08);
+\draw[line width=1.5pt,red!75!black] (0,0)--(1.7,0);
+\draw[thick] (1.7,-.12)--(1.7,.12) (1.7,-.12)--(1.82,-.12) (1.7,.12)--(1.82,.12);
+\draw[<->] (.05,-.2)--(1.7,-.2) node[midway,below] {$q_2$};
+\end{scope}
+\filldraw[fill=white] (0,0) circle(.045);
+\draw[->] (.4,0) arc(0:35:.4) node[right] {$q_1$};
+\foreach \x/\y/\l/\a in {1/.5/A/above right,1/0/B/below,.5/1.5/C/above left,.5/1/D/left,1/1/E/right,1/1.5/F/above right}
+ {\fill (\x,\y) circle(.025);\node[\a] at (\x,\y) {$\l$};}
+\node at (1,-.55) {Physical space (m)};
+\end{scope}
+\begin{scope}[shift={(6,0)},x=2.8cm,y=1.25cm]
+\draw[axis] (0,0)--(1.65,0) node[right] {$q_1$};
+\draw[axis] (0,0)--(0,2.85) node[above] {$q_2$};
+\draw[dashed] (0,2.5)--(1.5,2.5);
+\filldraw[fill=violet!15,draw=violet] (0,2.5)--(0,1)
+ -- plot[domain=0:.4636476,samples=30] (\x,{1/cos(\x*180/pi)})--(.4636476,2.5)--cycle;
+\filldraw[fill=violet!15,draw=violet] (.785398,2.5)--(.785398,1.414214)
+ -- plot[domain=.785398:1.107149,samples=30] (\x,{1/sin(\x*180/pi)})
+ -- plot[domain=1.107149:1.249046,samples=30] (\x,{.5/cos(\x*180/pi)})--(1.249046,2.5)--cycle;
+\foreach \y in {1,2.5} \node[left] at (0,\y) {$\y$};
+\foreach \x/\l in {.5/{0.5},1/{1},1.5/{1.5}} \node[below] at (\x,0) {$\l$};
+\foreach \x/\y/\l/\a in {0/1/B/right,.463648/1.118/A/below,.785398/1.414/E/left,1.107149/1.118/D/below,1.249046/1.581/C/right}
+ {\fill (\x,\y) circle(.025);\node[\a] at (\x,\y) {$\l$};}
+\node at (.23,2.15) {$\mathcal C_{\mathrm{obs},1}$};
+\node at (1.02,2.15) {$\mathcal C_{\mathrm{obs},2}$};
+\node at (.75,-.73) {Configuration space (rad, m)};
+\end{scope}
+\end{tikzpicture}

@@ -77,12 +77,21 @@ lecture 14. It distinguishes paths from trajectories, treats periodic joint
 coordinates and sampled references, and develops trapezoidal and triangular
 velocity profiles. Four vector diagrams, a worked timing example, and seven
 exercises accompany the derivations.
+Chapter 13, "Configuration-space obstacles and path planning," develops
+the RP contact-boundary construction, obstacle enlargement for circular
+robots, and generalized Voronoi roadmaps from both deliveries of lecture 15.
+Lecture 16 extends it with graph representation, the complete weighted
+Dijkstra example and its modified-goal counterexample, a brief introduction
+to A*, and exact cell decomposition using a sweep line. Seven vector figures
+and fourteen exercises accompany the chapter.
 
 For correspondence with the classes, lecture 10 covers Sections 10.1--10.6;
 lecture 11 covers Sections 10.7--10.10; lecture 12 covers Sections
 10.11--10.13. Section 10.14 groups the exercises into arm kinematics,
 DH fundamentals, and DH examples/special cases.
 Lectures 13 and 14 correspond to Chapters 11 and 12, respectively.
+Lecture 15 covers Sections 13.1--13.4; lecture 16 covers Sections 13.5--13.8.
+Section 13.9 groups exercises by these two lectures.
 Appendix A collects the rotation-conversion reference formulas, including
 scalar-first unit quaternions and singular-case notes.
 
@@ -118,6 +127,10 @@ On Overleaf, upload the project and select `main.tex` as the main document.
 - `chapters/lecture10-dh-examples.tex`: special cases and worked DH examples from lecture 12.
 - `chapters/lecture11.tex`: Chapter 11, configuration and task spaces, from lecture 13.
 - `chapters/lecture12.tex`: Chapter 12, paths and trajectory timing, from lecture 14.
+- `chapters/lecture13.tex`: Chapter 13, C-obstacles and path planning, from lecture 15.
+- `chapters/lecture13-search.tex`: graph search and sweep-line sections from lecture 16.
+- `chapters/lecture13-sampling.tex`: approximate decomposition, PRM, search trees,
+  and motion primitives from lecture 17.
 - `appendices/rotation-conversions.tex`: conversion reference adapted from the supplied handout.
 - `figures/lecture02/`: vector diagrams drawn in TikZ and included by the chapter.
 - `figures/lecture03/`: diagrams for affine and homogeneous transformations.
@@ -130,13 +143,19 @@ On Overleaf, upload the project and select `main.tex` as the main document.
 - `figures/lecture10/`: joint symbols, serial-chain topology, planar RR geometry, workspace, DH frame geometry, and RR/RRP/coaxial examples.
 - `figures/lecture11/`: configuration descriptions, RP frames, mapped spaces, and path comparison.
 - `figures/lecture12/`: periodic coordinates, joint interpolation, and motion profiles.
+- `figures/lecture13/`: RP C-obstacles, obstacle enlargement, and Voronoi geometry/roadmap.
+- `tools/generate_sampling_figures.py`: regenerates the six lecture 17 vector
+  figures and checks their example paths, using only the Python standard library.
+- `tools/generate_voronoi_figure.py`: regenerates the computed Voronoi figure
+  using NumPy and SciPy. These are optional authoring dependencies; the normal
+  LaTeX build uses the generated TikZ file directly.
 - `chapters/lecture-template.tex`: starting point for future lectures.
 - `lectures/`: original boards and transcripts (local only, excluded from Git).
 - `editorial-notes.md`: source decisions and details requiring confirmation.
 
 ## Add a lecture
 
-1. Put the next board material and transcript in `lectures/15/`, then `16/`, etc.
+1. Put the next board material and transcript in `lectures/18/`, then `19/`, etc.
 2. Assign each topic to the appropriate chapter, extending an existing chapter
    when a class continues that topic. Record the source mapping in `editorial-notes.md`.
 3. Extend the appropriate chapter when a topic continues. For new

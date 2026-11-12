@@ -1,0 +1,221 @@
+\section{Representing a roadmap as a graph}
+\label{sec:l13-graphs}
+A graph $G=(V,E)$ consists of vertices (nodes) and edges connecting them.
+It can represent a road network, communication links, or any specified
+relationship. In a roadmap, intersections are nodes and the individual
+paths joining adjacent intersections are edges. Start, goal, and their
+projections are also inserted as nodes; a projection inside a branch splits
+that branch into two edges.
+
+An undirected edge permits travel in both directions. Directed edges
+represent allowed directions separately. A simple computer representation
+stores node identifiers and edge records $(u,v,w)$, where $w$ is the cost
+of traversing the edge. Neighbor lists provide another convenient
+representation. The graph drawing is a visualization of these records;
+its layout need not preserve physical distances. To execute a route, retain
+the geometric path associated with each edge as well.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture13/weighted-graph}
+\caption{An undirected weighted roadmap graph. Node 5 is the start and
+node 10 is the goal; nodes 4 and 9 represent their roadmap projections.
+Weights are assigned example costs, not measurements of this drawing.
+The red edges show the minimum-cost route.}
+\label{fig:l13-weighted}
+\end{figure}
+
+For a sequence of adjacent nodes $v_0,\ldots,v_m$, the path cost is
+\begin{equation}
+ J=\sum_{k=0}^{m-1}w(v_k,v_{k+1}).
+ \label{eq:l13-pathcost}
+\end{equation}
+If weights are physical lengths, minimizing $J$ finds a shortest route
+on the graph. Other choices can represent time or penalties. A graph
+route is not necessarily the shortest path in the continuous free space.
+For the assigned weights in Figure~\ref{fig:l13-weighted}, the visually
+plausible route $5,4,6,7,8,9,10$ costs
+$3+10+5+9+6+3=36$. A systematic search finds a route of cost 28.
+
+\section{Dijkstra's algorithm}
+\label{sec:l13-dijkstra}
+Dijkstra's algorithm applies to nonnegative edge costs. It maintains a
+best known cumulative cost $g(v)$ from the start and a predecessor $p(v)$
+for each reached node. An \emph{open} node has a tentative cost and awaits
+selection. A \emph{settled} node has been selected with minimum open cost;
+its cost is then final.
+
+\subsection{Selection and relaxation}
+\begin{enumerate}
+\item Set $g(q_S)=0$ and all other costs to infinity. Put the start in
+the open set; initially there are no predecessors or settled nodes.
+\item Select the node $u$ with smallest $g(u)$ among \emph{all} open
+nodes. Remove it from the open set and settle it.
+\item If $u=q_G$, stop successfully. Otherwise consider each unsettled
+neighbor $v$ and form the candidate $g(u)+w(u,v)$.
+\item If this candidate is smaller than $g(v)$, replace $g(v)$ and set
+$p(v)=u$. Insert $v$ into the open set or update its priority there.
+This operation is called \emph{relaxation}.
+\item Repeat. If the open set becomes empty before the goal is selected,
+there is no route from start to goal in this graph.
+\end{enumerate}
+The selection is global over the frontier, not restricted to neighbors
+of the most recently expanded node. Nonnegative weights ensure that an
+alternative path through a node with higher tentative cost cannot later
+improve the node just settled. Zero-weight edges are allowed; equal-cost
+choices can be resolved consistently without changing the optimal cost.
+
+\subsection{A complete trace}
+For the graph in Figure~\ref{fig:l13-weighted}, the selection order and
+successful updates are:
+\begin{center}
+\begin{tabular}{crl}
+\toprule
+Selected node & Final cost & New or improved tentative costs\\
+\midrule
+5 & 0 & $g(4)=3$\\
+4 & 3 & $g(3)=4,\quad g(6)=13$\\
+3 & 4 & $g(2)=10$\\
+2 & 10 & $g(1)=14,\quad g(7)=15$\\
+6 & 13 & $g(12)=23$; candidate 18 for node 7 rejected\\
+1 & 14 & $g(8)=19$\\
+7 & 15 & No improvement: candidate 24 for node 8 rejected\\
+8 & 19 & $g(9)=25$\\
+12 & 23 & $g(11)=38$\\
+9 & 25 & $g(10)=28,\quad g(11):38\to27$\\
+11 & 27 & No improvement\\
+10 & 28 & Goal selected: stop\\
+\bottomrule
+\end{tabular}
+\end{center}
+Node 11 illustrates a predecessor change: it is initially reached from
+12 at cost 38, then improved through 9 to cost 27. Node 12 must be selected
+before 9 because $23<25$, even though the drawing places node 9 nearer
+the goal. Dijkstra uses accumulated cost rather than visual direction.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture13/search-tree}
+\caption{Predecessor tree at termination, with cumulative costs in blue.
+The dashed link is the superseded predecessor of node 11, first reached
+through 12 at cost 38. The final red chain reconstructs the solution.
+Only one final predecessor is retained for each non-root node.}
+\label{fig:l13-tree}
+\end{figure}
+
+During a hand execution one may draw duplicate candidate occurrences of
+a graph node and cross out the more expensive ones. In a cost/predecessor
+implementation these occurrences correspond to comparisons against the
+same stored $g(v)$. A better candidate changes that node's predecessor;
+it does not create a distinct physical location.
+
+Once the goal is selected, follow predecessors backward:
+\[
+ 10\leftarrow9\leftarrow8\leftarrow1\leftarrow2\leftarrow3
+ \leftarrow4\leftarrow5.
+\]
+Reverse this list to obtain the forward route. Its cost is
+\[
+ 3+1+6+4+5+6+3=28.
+\]
+Each consecutive pair identifies an original roadmap edge. Executing the
+route follows those stored geometric curves, rather than new straight
+segments between node positions.
+
+\subsection{Why discovering the goal is not enough}
+Node 10 is first discovered at cost 28 while node 11 remains open at 27.
+The algorithm must select 11 before declaring 10 optimal. In the original
+graph this produces no further improvement, but the rule is essential.
+
+To see why, modify the graph by replacing $w(9,11)=2$ with 1 and adding
+an undirected edge $(11,10)$ of weight 1. Node 9 now discovers node 10 at
+28 and improves node 11 to 26. Expanding 11 improves the goal to
+$26+1=27$, giving
+\[
+ 5\to4\to3\to2\to1\to8\to9\to11\to10.
+\]
+Stopping at first discovery would return the inferior cost 28. The correct
+stopping event is selecting the goal as the minimum-cost open node.
+
+\section{A brief introduction to A*}
+A* prioritizes an open node by
+\begin{equation}
+ f(v)=g(v)+h(v),
+ \label{eq:l13-astar}
+\end{equation}
+where $h(v)$ estimates the remaining cost to the goal. This can concentrate
+the search on promising regions and reduce the number of expanded nodes.
+Setting $h=0$ recovers Dijkstra's selection rule. The heuristic changes
+the exploration order, not the definition of the accumulated path cost.
+
+When nodes have Cartesian positions and edge weights are lengths of
+physical paths, straight-line distance to the goal is a useful heuristic.
+It does not overestimate the remaining route length. It also satisfies
+the consistency condition $h(u)\le w(u,v)+h(v)$ for every edge, so an
+A* graph search that settles nodes need not reopen them. With a merely
+admissible but inconsistent heuristic, improved nodes may need reopening
+to retain optimality.
+
+Arbitrary example weights do not automatically support an unscaled
+Cartesian-distance heuristic. Its units and lower-bound property must
+match the chosen cost. A* does not permanently discard a branch merely
+because it initially points away from the goal; obstacles can require
+such detours. A useful heuristic can save work, but faster execution is
+not guaranteed for every problem.
+
+\section{Exact cell decomposition by a sweep line}
+\label{sec:l13-sweep}
+Another way to construct a planning graph is to partition the free region
+into simple cells. For polygonal obstacles and a polygonal outer boundary,
+choose a fixed sweep direction. At each vertex event, introduce parallel
+cuts through free space. A full-cut construction extends each event line
+through every free interval of the domain; it can subdivide more than
+the minimal vertical decomposition, but remains an exact decomposition.
+Obstacle interiors are excluded from the cells.
+
+Between consecutive event coordinates the boundaries are straight and
+do not change order. Each connected free cell is a triangle or trapezoid
+(including rectangular cases) and is convex. Convexity means the segment
+between any two points in the cell stays in the cell. A nonconvex region
+does not have this property for every pair of points.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture13/cell-decomposition}
+\caption{Full vertical cuts through polygon vertices partition the free
+region into 15 convex cells. The connectivity graph records free portals
+between cells. The red route uses the sequence
+$1,2,3,4,5,9,15,14,12$; the orange detour illustrates passing through an
+interior point when entering and leaving cell 9 on the same side.
+The geometry preserves the two-obstacle layout and cell numbering.}
+\label{fig:l13-cells}
+\end{figure}
+
+\subsection{Connectivity and geometric reconstruction}
+Represent each cell by a graph node. Connect cells that share a
+traversable boundary interval, called a \emph{portal}. Mere contact at
+an obstacle vertex does not create a usable passage when obstacle contact
+counts as collision. Identify the cells containing $q_S$ and $q_G$, then
+search their connectivity graph.
+
+The result is initially a sequence of cells, not yet a geometric path.
+Choose a point in the relative interior of each free portal, such as its
+midpoint. Connect the start, successive portal points, and the goal with
+segments inside the corresponding cells. Convexity keeps those segments
+inside cell closures, but obstacle boundaries are forbidden. If two portal
+points lie on the same supporting line and their direct connection runs
+along an obstacle, insert a point strictly inside the cell and connect
+through it instead. This occurs for the sequence $5,9,6$ in the figure.
+
+The complete procedure is therefore:
+\begin{enumerate}
+\item Decompose the free region with parallel sweep cuts.
+\item Number the cells and construct the portal-adjacency graph.
+\item Locate the start and goal cells and run graph search.
+\item Select free portal points along the returned sequence.
+\item Construct and check the geometric segments, adding interior
+waypoints where necessary.
+\end{enumerate}
+An unweighted adjacency graph can minimize the number of cell transitions.
+That objective is not necessarily geometric path length. To optimize a
+length cost, the graph representation and weights must account for the
+actual connectors being used. Similarly, exact decomposition describes
+the represented geometry faithfully; it does not imply exact knowledge
+of a real environment or automatic dynamic feasibility of the path.

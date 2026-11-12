@@ -1,0 +1,340 @@
+\section{Approximate cell decomposition}
+\label{sec:l13-approximate}
+Exact decomposition follows obstacle geometry. An alternative is to cover
+configuration space with simple cells and refine the cells whose status is
+uncertain. In two dimensions, a square can be divided into four equal
+squares; repeating this operation produces a \emph{quadtree}. Small cells
+resolve obstacle boundaries while large cells can represent open regions.
+
+Consider a bounded two-dimensional configuration space. Enclose it in a
+square if necessary, treating the region outside the permitted domain as
+forbidden. Classify each cell by its interior:
+\begin{itemize}
+\item \textbf{Empty:} its interior contains only free configurations.
+\item \textbf{Occupied:} its interior is entirely forbidden.
+\item \textbf{Mixed:} it contains both free and forbidden configurations.
+\end{itemize}
+Obstacle contact still counts as collision. Calling a cell empty does
+not make every point on its boundary free: shared boundaries must be
+checked when constructing transitions.
+
+\subsection{Refinement guided by a connectivity graph}
+The following procedure uses an \emph{optimistic} graph: mixed cells are
+temporarily allowed, but a route through them is only a candidate.
+\begin{enumerate}
+\item Split the initial square into four cells and classify them.
+\item Create a graph node for each nonoccupied cell. Connect cells that
+share a boundary segment of positive length through which a transition
+might be possible. Do not connect cells merely because they share a corner.
+For two empty cells, require a free portion of their common boundary.
+\item Locate the cells containing $q_S$ and $q_G$ and search the graph
+between them. First check that the start and goal themselves are free.
+Prefer a route using only empty cells: search that subgraph first, and
+use the optimistic graph if no such route is available yet.
+\item If the candidate route includes mixed cells, subdivide mixed cells
+into four, update the graph, and search again. A simple implementation
+refines all mixed cells at each iteration.
+\item Once the route uses only empty cells, choose a free crossing point
+on each shared boundary and construct a continuous path through those
+points. Validate the resulting path before accepting it.
+\end{enumerate}
+A conservative alternative excludes mixed cells from the graph. In that
+version, an unsuccessful search can trigger further subdivision: a passage
+may exist inside cells that have not yet been resolved.
+
+Figure~\ref{fig:l13-quadtree} illustrates three successive resolutions.
+The initial graph is small but cannot certify a route. Refinement reveals
+occupied cells inside the larger obstacle and creates smaller cells around
+both obstacle boundaries. A large empty square remains in the lower-left
+region throughout: there is no need to subdivide every cell uniformly.
+
+\begin{figure}[p]
+\centering\input{figures/lecture13/quadtree}
+\caption{Approximate decomposition and its connectivity graphs, using the
+same obstacles at all three iterations. White cells/nodes are empty,
+gray ones are mixed, and black cells are occupied and excluded from the
+graphs. Red graph routes in iterations 1 and 2 are provisional because
+they visit mixed cells. The third route uses only empty cells; the map
+shows a validated geometric realization through free portals and cell
+interiors. Graph edges describe adjacency, not executable straight paths
+between cell centers when mixed cells are involved.}
+\label{fig:l13-quadtree}
+\end{figure}
+
+\subsection{From cells to a path}
+For adjacent empty cells, the free part of their shared side is a
+\emph{portal}. Its midpoint is a convenient crossing point when the
+whole portal is free. Join consecutive crossings through the cell interior,
+inserting an interior waypoint if a direct connection would follow a
+forbidden boundary. Square cells are convex, so interior waypoints make
+this construction particularly simple. Include connections from $q_S$
+and to $q_G$.
+
+Refinement requires a stopping rule, such as a maximum depth or minimum
+cell width. Failure to obtain a certified route at that resolution does
+not generally prove that no continuous path exists. A narrow passage can
+remain hidden in mixed cells. Conversely, a graph disconnected even when
+all mixed cells are allowed can certify separation if that graph includes
+every possible transition under the chosen domain assumptions.
+
+A shortest route on the cell graph minimizes its assigned graph cost.
+It need not be the shortest geometric path. Refining only mixed cells
+does not by itself establish convergence to the continuous shortest path.
+After constructing a feasible path, one can try collision-checked
+\emph{shortcuts}: replace a subpath by a straight segment only when the
+entire replacement is free. This can reduce length without certifying
+global optimality.
+
+\section{Probabilistic roadmaps}
+\label{sec:l13-prm}
+Cell decompositions construct a representation by partitioning space.
+A \emph{probabilistic roadmap} (PRM) instead samples configurations and
+connects nearby samples with feasible local paths. Different samples can
+produce different graphs, so adding samples can reveal connections that
+were absent in an earlier attempt.
+
+For a point moving in a planar free region, a local path can be a straight
+segment. A simple construction is:
+\begin{enumerate}
+\item Sample a batch of $N$ configurations in the domain.
+\item Reject configurations in collision. Retain the free samples as nodes.
+\item For pairs closer than a connection radius $d$, test the complete
+straight segment between them. Add an edge only if that segment is free.
+Assign a cost, such as its Euclidean length.
+\item Insert $q_S$ and $q_G$ and connect them by the same local test.
+Search the graph using Dijkstra or another suitable graph-search method.
+\item If no route exists in the current graph, add more samples and
+connections, subject to a computation budget, and search again.
+\end{enumerate}
+In a fixed environment the roadmap can be reused for different start--goal
+queries. Only the query configurations and their connections need to be
+inserted again, provided the robot model and collision geometry are unchanged.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture13/prm}
+\caption{A sampled roadmap in a polygonal domain. Sample colors distinguish
+three batches; red crosses mark rejected configurations inside obstacles.
+The dashed red candidate edge has free endpoints but crosses the triangular
+obstacle, so it is rejected. The highlighted route consists entirely of
+validated edges. Coordinates are illustrative.}
+\label{fig:l13-prm}
+\end{figure}
+
+\subsection{Checking nodes is not enough}
+Two free configurations can lie on opposite sides of an obstacle. Thus
+node validity and edge validity are separate tests. If an attempted edge
+is blocked, remove that edge, not its otherwise valid endpoints: those
+nodes may still connect to other neighbors. The same distinction applies
+when an edge is a curved robot motion rather than a straight line.
+
+The radius $d$ controls the candidate connections. A small radius reduces
+the number of attempted edges but can leave the graph disconnected.
+A larger radius offers more connections and requires more collision tests.
+For configurations involving angles or mixed units, the distance used to
+select neighbors must be defined appropriately; it is not automatically
+ordinary distance between unscaled coordinate entries.
+
+\subsection{What randomness does and does not guarantee}
+An unsuccessful finite run means that the current samples and connections
+did not produce a route. It does not establish that the planning problem
+is impossible. Biasing samples toward the goal or a likely corridor can
+help, but excluding other regions can remove the only feasible detour.
+
+Two different properties must be distinguished:
+\begin{itemize}
+\item \textbf{Probabilistic completeness:} for a feasible problem satisfying
+the method's assumptions, the probability of finding a solution approaches
+one as the number of samples grows.
+\item \textbf{Asymptotic optimality:} under the relevant assumptions, the
+best solution cost converges to the optimal cost as sampling continues.
+\end{itemize}
+Neither property means that a finite run must succeed or return the
+continuous optimum. Dijkstra finds the optimum on the constructed graph;
+that alone proves neither property for the sampling procedure. Guarantees
+depend on the sampling distribution, local planner, connection rule, and
+geometry. PRM* is a roadmap variant designed for asymptotic optimality.
+
+\section{Growing search trees}
+\label{sec:l13-trees}
+A roadmap may connect many pairs of samples. A tree instead gives each
+new node one parent and grows outward from an initial configuration.
+Once a node has a valid connection to the goal, its parent chain recovers
+a path to the root. There is no need to run Dijkstra merely to recover
+the unique path already stored in that tree.
+
+\subsection{A local branching construction}
+A useful geometric construction starts at $q_S$, proposes a few points
+at distance $d$ from it, and retains the collision-free connecting segments.
+Repeat from the new nodes, drawing successive generations in different
+colors. Reject candidates whose motions hit an obstacle or leave the domain.
+An unsuccessful extension does not necessarily make its parent useless:
+another direction from the same parent may be valid.
+
+If every accepted edge has length $d$, a node at depth $k$ has path
+length $kd$. Expanding by increasing depth then agrees with increasing
+path cost. If lengths differ, use accumulated edge costs instead. A
+priority based on cost plus a suitable heuristic can guide this kind of
+search, but it defines a different expansion policy from standard RRT.
+Figure~\ref{fig:l13-local-tree} shows the local construction.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture13/local-tree}
+\caption{Local branching from $q_S$ with equal-length candidate steps.
+Colors identify successive generations. Dashed red extensions and crosses
+mark rejected candidates; the existing free parent nodes remain valid.
+The tree has not yet reached $q_G$. This generation-by-generation
+construction illustrates tree growth; it does not use the standard RRT
+node-selection rule.}
+\label{fig:l13-local-tree}
+\end{figure}
+
+\subsection{Rapidly exploring random trees}
+An \emph{RRT}, or \emph{rapidly exploring random tree}, selects where to
+expand using a sample from the configuration space. For a planar geometric
+problem, one iteration is:
+\begin{enumerate}
+\item Sample a target configuration $q_{\mathrm{rand}}$.
+\item Find the tree vertex $q_{\mathrm{near}}$ closest to that target.
+\item Steer from $q_{\mathrm{near}}$ toward $q_{\mathrm{rand}}$ by at most
+a chosen step length $d$, obtaining a candidate $q_{\mathrm{new}}$.
+\item If the complete extension is free, add $q_{\mathrm{new}}$ with
+parent $q_{\mathrm{near}}$; otherwise reject the extension.
+\end{enumerate}
+In Euclidean coordinates, for a nonzero separation, the steering step is
+\[
+ q_{\mathrm{new}}=q_{\mathrm{near}}+
+ \min\!\left(1,\frac{d}{\|q_{\mathrm{rand}}-q_{\mathrm{near}}\|}\right)
+ (q_{\mathrm{rand}}-q_{\mathrm{near}}).
+\]
+Figure~\ref{fig:l13-rrt-step} separates the random target from the new
+vertex actually added. The target need not become a tree node.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture13/rrt-step}
+\caption{One RRT extension. A global random target selects its nearest
+existing tree vertex. Only the short, validated extension to
+$q_{\mathrm{new}}$ is inserted; the dashed remainder is not a tree edge.}
+\label{fig:l13-rrt-step}
+\end{figure}
+
+Each vertex has a region of targets for which it is the nearest vertex:
+its Voronoi region relative to the tree vertices. Under uniform sampling,
+vertices with larger such regions are selected more frequently. This
+helps exploration spread into uncovered space. RRT therefore does not
+simply expand every leaf once per generation.
+
+The goal may be represented by a small goal region, or the planner may
+attempt a checked connection to $q_G$ from a nearby vertex. Occasionally
+sampling the goal itself is another useful bias. Closeness alone is not
+a valid final edge: that connection must satisfy collision and motion
+constraints. Basic RRT seeks a feasible path and is not generally
+asymptotically optimal; RRT* adds a cost-aware parent choice and rewiring.
+
+\subsection{Bidirectional growth}
+Two trees can be rooted at $q_S$ and $q_G$ and grown toward one another.
+When vertices in different trees can be joined by a valid local path,
+concatenate the start-tree path, the connecting motion, and the goal-tree
+path. In a reversible geometric problem the goal-tree edges can be
+traversed in reverse order.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture13/bidirectional-tree}
+\caption{Two geometric trees exploring around an obstacle. A checked
+connection above the obstacle joins the trees. The highlighted route
+combines their parent chains and the connecting edge.}
+\label{fig:l13-bidirectional}
+\end{figure}
+
+Growing from both ends can reduce the exploration needed before a
+connection is found, although the benefit depends on the environment and
+extension policy. It does not guarantee a fixed speedup or an optimal path.
+For robots with directional motion constraints, constructing the goal
+tree requires more care, as the next section explains.
+
+\section{Motion primitives and nonholonomic robots}
+\label{sec:l13-primitives}
+A free path for a point in the plane is not automatically an executable
+motion for a robot. For a unicycle with $q=(x,y,\theta)$,
+\[
+ \dot{x}=v\cos\theta,\qquad
+ \dot{y}=v\sin\theta,\qquad
+ \dot{\theta}=\omega.
+\]
+It cannot translate instantaneously sideways relative to its heading.
+An ideal unicycle can rotate in place by choosing $v=0$, but that rotation
+takes time for bounded $\omega$. Other platforms, such as a car with
+bounded steering, cannot generally rotate in place.
+
+A \emph{motion primitive} is a short feasible motion generated by a
+specified control input. For example, hold $v>0$ fixed over a duration
+$\Delta t$ and choose one of
+\[
+ \omega\in\{-\omega_0,\,0,\,+\omega_0\}.
+\]
+The resulting motions are a right arc, a straight segment, and a left arc.
+For $\omega\ne0$, their endpoints are
+\begin{align*}
+ x'&=x+\frac{v}{\omega}
+       [\sin(\theta+\omega\Delta t)-\sin\theta],\\
+ y'&=y-\frac{v}{\omega}
+       [\cos(\theta+\omega\Delta t)-\cos\theta],\\
+ \theta'&=\theta+\omega\Delta t.
+\end{align*}
+For $\omega=0$, use $x'=x+v\Delta t\cos\theta$,
+$y'=y+v\Delta t\sin\theta$, and $\theta'=\theta$.
+These are the same constant-input motions used in odometry, now used
+to generate candidate successors during planning.
+
+\subsection{Expanding feasible motions}
+From a node, generate its permitted primitives and collision-check each
+complete swept motion. Retain valid endpoints together with their headings,
+parent pointers, and generating controls. Expanding all three primitives
+at every surviving node gives a deterministic motion-primitive search
+tree. A sampling-based tree can instead use random targets or controls
+to choose extensions. Randomness and kinematic feasibility are separate
+design choices.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture13/motion-primitives}
+\caption{Motion-primitive trees shown in the $(x,y)$ plane; nodes also
+carry heading. The start tree (red) contains forward successors. The
+goal tree (green) contains predecessors, with arrows pointing toward
+the goal. Both use the same forward-moving unicycle model. Dashed
+extensions leave the domain and are rejected. No connection between
+the two trees is claimed.}
+\label{fig:l13-primitives}
+\end{figure}
+
+Two nodes at the same position but with different headings are different
+configurations. Likewise, two spatially close endpoints may not be
+connectable by the allowed motions. A valid connection must match the
+required pose and respect the controls and collision constraints. If
+obstacles are represented in workspace rather than already in configuration
+space, check the robot's footprint along the motion, not only its reference
+point.
+
+\subsection{Growing backward from a goal pose}
+For bidirectional planning, the goal tree should represent motions that
+can actually arrive at $q_G$. Its new nodes are \emph{predecessors}:
+configurations from which an allowed forward primitive reaches an existing
+goal-tree node. Therefore, motion arrows point toward the goal-tree root.
+
+For the constant-input model above, a predecessor can be computed by
+integrating the same equations backward in time for $\Delta t$. This is
+a construction operation: the robot executes the resulting edge forward
+from the predecessor to its parent. It does not require the robot to drive
+backward. Simply growing a forward-only robot away from the goal and then
+reversing those motions would generally violate its admissible controls.
+
+The final planning pipeline remains the same: generate valid connections,
+find a route through them, and recover the corresponding robot motion.
+The representation changes from free straight segments to motions that
+respect the vehicle's kinematics.
+
+\smallskip
+\textit{Further reading.} The standard RRT construction is described in
+\href{https://lavalle.pl/papers/Lav98c.pdf}{S.~M.~LaValle,
+\emph{Rapidly-Exploring Random Trees: A New Tool for Path Planning} (1998)}.
+The \href{https://ompl.kavrakilab.org/planners.html}{Open Motion Planning
+Library planner overview} distinguishes basic planners from optimal variants
+such as PRM* and RRT*.
