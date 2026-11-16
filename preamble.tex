@@ -3,10 +3,17 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
+\usepackage{listings}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,calc}
 \definecolor{robotframe}{RGB}{180,55,35}
 \definecolor{sensorframe}{RGB}{30,105,155}
+\lstdefinestyle{robotcode}{basicstyle=\footnotesize\ttfamily,
+ keywordstyle=\color{sensorframe}\bfseries,commentstyle=\color{black!55},
+ stringstyle=\color{robotframe},showstringspaces=false,
+ columns=fullflexible,keepspaces=true,breaklines=true,
+ frame=single,rulecolor=\color{black!25},framesep=5pt,
+ xleftmargin=6pt,xrightmargin=6pt,tabsize=4}
 \tikzset{axis/.style={-{Stealth},thick},projection/.style={dashed,thin},
  every node/.style={font=\small}}
 \usepackage[expansion=false]{microtype}

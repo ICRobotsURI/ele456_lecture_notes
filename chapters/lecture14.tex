@@ -1,0 +1,469 @@
+\chapter{Python and ROS 2: nodes and topics}
+\label{ch:ros2}
+The algorithms developed so far must eventually exchange data with sensors,
+actuators, and other algorithms. A controller needs the robot's estimated
+pose and a reference to follow. A mapping algorithm needs measurements and
+the poses from which they were collected. A planner needs a map, a start,
+and a goal. Implementing these functions as communicating components makes
+their responsibilities and interfaces explicit.
+
+This chapter introduces enough Python to read two small ROS 2 programs:
+a periodic publisher and a subscriber that processes its messages. The
+examples use text so that the communication is easy to observe. The same
+structure will later carry measurements and robot commands.
+
+\section{A short introduction to Python}
+\subsection{Loops, conditions, and functions}
+In Python, indentation determines which statements belong to a block.
+A colon introduces the body of a loop, conditional, function, or class.
+Use consistent indentation; four spaces per level is the usual convention.
+Unlike C braces or MATLAB's \texttt{end}, indentation is part of the syntax.
+
+\begin{lstlisting}[style=robotcode,language=Python]
+def thisIsTwooo():
+    print("THIS IS TWOOOOO")
+
+for i in range(0, 5):
+    print(i)
+    if i == 2:
+        print("this is two!")
+thisIsTwooo()
+\end{lstlisting}
+The loop visits $0,1,2,3,4$: the upper limit of \texttt{range} is excluded.
+The operator \texttt{==} compares values; \texttt{=} assigns a value.
+The conditional message appears only when \texttt{i} equals 2. The final
+function call is outside the loop and therefore executes once, after it.
+Defining a function with \texttt{def} does not execute its body; calling
+the function does.
+
+\begin{minipage}{\linewidth}
+The output is
+\begin{lstlisting}[style=robotcode]
+0
+1
+2
+this is two!
+3
+4
+THIS IS TWOOOOO
+\end{lstlisting}
+\end{minipage}
+
+Moving \texttt{thisIsTwooo()} one indentation level to the right places
+it inside the loop, but outside the conditional: it then executes five
+times. Moving it another level to the right places it inside the conditional,
+so it executes once, immediately after \texttt{this is two!}. These programs
+differ in behavior even though the words on the line are unchanged.
+
+\subsection{Objects, methods, and instance data}
+A class describes objects that combine data with operations on those data.
+An \emph{instance} is a particular object created from the class. A function
+defined in a class is a method; the parameter \texttt{self} refers to the
+instance on which an ordinary instance method operates.
+\begin{lstlisting}[style=robotcode,language=Python]
+class Counter:
+    def __init__(self):
+        self.i = 0
+
+    def increment(self):
+        self.i += 1
+
+counter = Counter()
+counter.increment()
+print(counter.i)       # 1
+\end{lstlisting}
+The initialization method \texttt{\_\_init\_\_} runs when the instance is
+initialized. Here it gives that instance an attribute named \texttt{i}.
+The method call \texttt{counter.increment()} operates on that same object.
+An ordinary local variable exists within a function's execution; an
+attribute such as \texttt{self.i} stores state that other methods of the
+instance can access later. This is useful for a counter that persists
+between successive callbacks.
+
+Inheritance lets a new class extend an existing class. In
+\texttt{class MinimalPublisher(Node)}, the new class inherits ROS-related
+methods from \texttt{Node}, then defines its own initialization and callback.
+Calling \texttt{super().\_\_init\_\_(...)} performs the base-class
+initialization needed before using those ROS facilities.
+
+\section{A robot as a network of software components}
+\label{sec:l14-architecture}
+A robot driver translates between the hardware interface and software
+messages. For example, it may read wheel information over a serial link,
+publish odometry, and translate requested linear and angular velocities
+into hardware commands. A lidar driver similarly translates scan data
+into a representation that other software can consume. USB serial links
+are one possible hardware interface, not a requirement of ROS 2.
+
+Above these drivers, separate components can implement mapping, planning,
+and control, as in Figure~\ref{fig:l14-architecture}:
+\begin{itemize}
+\item The mapping component combines scans with an available pose estimate.
+\item The planner uses the map, start, and goal to produce a path.
+\item The controller combines a reference with pose feedback to compute
+velocity commands $(v,\omega)$.
+\end{itemize}
+A geometric path still needs an execution policy: a controller may select
+successive waypoints, or a separate step may assign timing to obtain a
+trajectory. The diagram groups this reference-generation step with planning.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture14/architecture}
+\caption{A modular robot system. The five software boxes are ROS 2 nodes
+in this example. Colored arrows represent topic-based data flow; black
+arrows connect hardware to its drivers. Odometry feeds both mapping and
+control. Start and goal inputs to planning are omitted for clarity.
+The hardware can also be replaced by a simulator exposing compatible
+interfaces.}
+\label{fig:l14-architecture}
+\end{figure}
+
+\subsection{Nodes, topics, and messages}
+A \emph{node} is a participant in the ROS 2 computation graph. It typically
+has a focused responsibility, such as receiving a sensor stream or computing
+control commands. The examples here run one node per executable. This is
+a useful organization, not a restriction: multiple nodes can share a process,
+and communicating nodes can run on different computers.
+
+A \emph{topic} is a named communication channel. A publisher sends messages
+on that topic; a subscription receives them. A node can have several
+publishers and subscriptions simultaneously. Multiple subscribers can
+receive the same published stream, as mapping and control do with odometry.
+Topics can also have multiple publishers; they are not inherently private
+point-to-point connections.
+
+A \emph{message type} defines the structure of each message. The examples
+use \texttt{std\_msgs/msg/String}, whose \texttt{data} field contains text.
+The ROS message object and the Python string stored in its field are
+different objects. Sensor and command interfaces use types suited to their
+data rather than encoding everything as text.
+
+For communication, the resolved topic names and message types must match,
+and the quality-of-service settings must be compatible. In the default
+root namespace, the relative name \texttt{my\_topic} resolves to
+\texttt{/my\_topic}. A different namespace can change that resolved name.
+
+\subsection{Why separate the components?}
+If a better planner becomes available, it can replace the planner node
+while leaving the mapping and control implementations intact, provided
+it satisfies the same interface contract. This contract includes more
+than a topic name: message structure, units, coordinate frames, meaning,
+and timing requirements must agree. A path in a different frame is not
+interchangeable merely because it has the same message type.
+
+Modularity also makes it possible to inspect one stream, test one component,
+or replace a real sensor with simulated data. ROS 2 supplies communication
+facilities; the application still defines the algorithms and the meaning
+of the exchanged information.
+
+\section{A periodic publisher}
+\label{sec:l14-publisher}
+The following program, stored as \texttt{class\_20261112\_b.py}, combines
+the introductory Python statements with a periodic publisher. It sends
+\texttt{Ciao 0}, \texttt{Ciao 1}, and so on, with a nominal period of
+$T=0.5\,\mathrm{s}$, corresponding to $f=1/T=2\,\mathrm{Hz}$.
+
+\begin{lstlisting}[style=robotcode,language=Python]
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
+
+class MinimalPublisher(Node):
+    def __init__(self):
+        super().__init__('minimal_publisher')
+        self.publisher_ = self.create_publisher(
+            String, 'my_topic', 10)
+        self.timer = self.create_timer(0.5, self.timer_callback)
+        self.i = 0
+
+    def timer_callback(self):
+        msg = String()
+        msg.data = 'Ciao %d' % self.i
+        self.publisher_.publish(msg)
+        self.i += 1
+\end{lstlisting}
+
+\begin{minipage}{\linewidth}
+The remainder of the same file contains the Python demonstration and the
+entry point that starts the node:
+\begin{lstlisting}[style=robotcode,language=Python]
+def thisIsTwooo():
+    print("THIS IS TWOOOOO")
+
+
+def main(args=None):
+    for i in range(0, 5):
+        print(i)
+        if i == 2:
+            print("this is two!")
+    thisIsTwooo()
+
+    rclpy.init(args=args)
+    minimal_publisher = MinimalPublisher()
+    try:
+        rclpy.spin(minimal_publisher)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        minimal_publisher.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
+\end{lstlisting}
+\end{minipage}
+
+\subsection{Initialization and persistent state}
+The imports make the client library \texttt{rclpy}, its \texttt{Node}
+class, and the \texttt{String} message type available. The call
+\texttt{rclpy.init} initializes the ROS context before the node is created.
+Instantiating \texttt{MinimalPublisher} then runs its initialization method.
+
+The name \texttt{minimal\_publisher} identifies the node in the ROS graph.
+It is distinct from the Python class name and from the topic name.
+The inherited method \texttt{create\_publisher} creates a publisher for
+\texttt{String} messages on \texttt{my\_topic}.
+
+The argument 10 specifies a history depth for the default keep-last QoS
+configuration: a bounded number of samples can be retained. It does not
+set the publication rate. Use a positive depth for this example; zero
+is not a useful choice for keep-last history and can produce a warning.
+Detailed QoS design is beyond this introduction.
+
+The timer stores a reference to \texttt{self.timer\_callback}. Notice
+that there are no parentheses after the callback name here: the program
+passes the callable rather than executing it immediately. Finally,
+\texttt{self.i = 0} initializes the counter that persists between callbacks.
+The trailing underscore in \texttt{publisher\_} is simply part of the
+attribute name; it has no special ROS meaning.
+
+\subsection{Publishing a message}
+Each timer callback constructs a fresh message, fills its \texttt{data}
+field, publishes it, and increments the counter. In
+\texttt{'Ciao \%d' \% self.i}, the integer replaces the \texttt{\%d}
+placeholder. The counter is incremented after publishing, so the first
+message contains zero.
+
+Publishing does not automatically print a message in the publisher's
+terminal. The Python demonstration prints once at startup; later ROS
+messages are visible through a subscription or an inspection command.
+Console output and topic communication are separate operations.
+
+\subsection{Why the program needs \texttt{spin}}
+Creating a timer and a publisher registers work that can happen later.
+It does not by itself keep executing callbacks. The call
+\texttt{rclpy.spin(node)} runs an executor that waits for ready work and
+dispatches callbacks. It is an event-processing loop, not merely a sleep.
+Without it, this example would create the node and then reach the end
+without servicing its periodic callback.
+
+With the default single-threaded executor, callbacks run one at a time.
+A long or blocking callback can delay other work. A timer period specifies
+the intended timing; it is not a guarantee of exact wall-clock execution
+under every load.
+
+The \texttt{try}/\texttt{except}/\texttt{finally} structure allows an
+interactive interruption and ensures cleanup when leaving the spin call.
+The node is destroyed and the context is shut down if still active.
+The final \texttt{if \_\_name\_\_ == '\_\_main\_\_'} calls
+\texttt{main()} when Python executes the file directly. A ROS console
+entry point can instead import the module and call \texttt{main} explicitly.
+
+\section{A subscriber and its callback}
+\label{sec:l14-subscriber}
+The subscriber uses the same message type and topic name. Its callback
+receives a message object as an argument and prints the text through the
+node's logger. Store this program as \texttt{my\_subscriber.py}.
+
+\begin{lstlisting}[style=robotcode,language=Python]
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
+
+class MinimalSubscriber(Node):
+    def __init__(self):
+        super().__init__('minimal_subscriber')
+        self.subscription = self.create_subscription(
+            String, 'my_topic', self.listener_callback, 10)
+
+    def listener_callback(self, msg):
+        self.get_logger().info('I heard: "%s"' % msg.data)
+\end{lstlisting}
+
+\begin{minipage}{\linewidth}
+The same file ends with the subscriber's entry point:
+\begin{lstlisting}[style=robotcode,language=Python]
+def main(args=None):
+    rclpy.init(args=args)
+    minimal_subscriber = MinimalSubscriber()
+    try:
+        rclpy.spin(minimal_subscriber)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        minimal_subscriber.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
+\end{lstlisting}
+
+\end{minipage}
+
+The subscription registers \texttt{self.listener\_callback} to process
+incoming messages. The executor
+invokes that callback with the received message. The callback need not
+print; it could update a stored pose, process a scan, or compute a response.
+The subscriber does not need its own periodic timer merely to receive data.
+
+\begin{figure}[htbp]
+\centering\input{figures/lecture14/pubsub}
+\caption{Two different events drive the two callbacks. A timer makes the
+publisher callback ready; a received message makes the subscriber callback
+ready. Each node's executor dispatches its callbacks while spinning.
+The topic carries messages, not Python function calls between the programs.}
+\label{fig:l14-pubsub}
+\end{figure}
+
+A subscriber started after the publisher normally begins with newly
+received messages rather than the complete earlier sequence under these
+default settings. Likewise, a history depth of 10 does not mean that a
+late subscriber automatically receives the last ten messages.
+
+\section{Packages, entry points, and execution}
+\label{sec:l14-running}
+A workspace groups packages and their build products. A Python ROS package
+contains both Python modules and metadata used to install and locate
+executables.
+
+\begin{minipage}{\linewidth}
+The relevant structure in this example is
+\begin{lstlisting}[style=robotcode]
+ros2_ws/
+  src/
+    my_package/
+      package.xml
+      setup.py
+      setup.cfg
+      resource/my_package
+      my_package/
+        __init__.py
+        class_20261112_b.py
+        my_subscriber.py
+\end{lstlisting}
+\end{minipage}
+
+The outer \texttt{my\_package} is the ROS package directory; the inner
+directory is its importable Python package. The workspace's \texttt{build},
+\texttt{install}, and \texttt{log} directories are generated products.
+For navigation, \texttt{pwd} prints the working directory, \texttt{ls}
+lists its contents, \texttt{cd} changes directory, and \texttt{cd ..}
+moves to the parent directory.
+
+\subsection{Registering the executable}
+Saving a Python file does not register it with \texttt{ros2 run}.
+In \texttt{setup.py}, console-script entries map executable names to
+Python functions. The two
+relevant entries, within the existing \texttt{setup(...)} call, are
+\begin{lstlisting}[style=robotcode,language=Python]
+entry_points={
+    'console_scripts': [
+        'class_20261112_b = my_package.class_20261112_b:main',
+        'listener = my_package.my_subscriber:main',
+    ],
+},
+\end{lstlisting}
+Each entry has the form \texttt{executable = package.module:function}.
+For example, \texttt{listener} is the executable name; it imports
+\texttt{my\_package.my\_subscriber} and calls \texttt{main}. Add these
+entries alongside other executables rather than removing unrelated entries.
+The package declares dependencies including \texttt{rclpy} and
+\texttt{std\_msgs} in \texttt{package.xml}; \texttt{setup.cfg} places
+the installed scripts where ROS tooling expects to find them.
+
+\subsection{Build, source, and run}
+The commands below assume a Linux shell with the ROS 2 installation already
+available, such as a prepared container. From the workspace root:
+\begin{lstlisting}[style=robotcode]
+cd ~/ros2_ws
+colcon build --packages-select my_package
+source install/setup.bash
+ros2 run my_package class_20261112_b
+\end{lstlisting}
+For a Python package this build step primarily installs code and entry
+points; it is not C-style compilation. With an ordinary copied installation,
+save and rebuild after edits. A workspace configured with symlink installation
+can expose many Python source edits directly, but metadata changes still
+require rebuilding. Sourcing the workspace makes its installed packages
+available in that shell. A new terminal needs the environment too.
+
+In a second terminal, with the base ROS environment available:
+\begin{lstlisting}[style=robotcode]
+source ~/ros2_ws/install/setup.bash
+ros2 run my_package listener
+\end{lstlisting}
+The subscriber should report messages such as \texttt{I heard: "Ciao 12"}.
+The initial number depends on when it connects. The executable can be run
+from any directory once its environment is sourced; the build commands
+above deliberately use the workspace root.
+
+\subsection{Observing the communication}
+The command-line tools can inspect the running system without adding
+application code:
+\begin{lstlisting}[style=robotcode]
+ros2 node list
+ros2 topic list
+ros2 topic info /my_topic
+ros2 topic echo /my_topic
+\end{lstlisting}
+The echo command acts as another subscriber and displays messages as they
+arrive. It can run alongside the custom subscriber. Tab completion can
+help discover available package and executable names.
+
+If no messages arrive, first check that both processes are running and
+spinning, then inspect the resolved topic names, types, and QoS compatibility.
+In particular, \texttt{topic} and \texttt{my\_topic} are different names.
+If a new executable is not found, check its entry point, rebuild, and
+source the correct workspace. Distinguish the executable name, ROS node
+name, and topic name: they serve different purposes and need not match.
+
+\clearpage
+\section{Additional exercises}
+\begin{enumerate}
+\item \textbf{Indentation changes behavior.} Write the output of the
+introductory Python example for each of the three placements of
+\texttt{thisIsTwooo()}: outside the loop, inside the loop but outside
+the conditional, and inside the conditional. Explain the order of the output.
+\item \textbf{Persistent state.} Predict what happens if \texttt{self.i = 0}
+is moved from the publisher's initialization method to the beginning of
+\texttt{timer\_callback}. Why is instance state useful here?
+\item \textbf{Two timing parameters.} Change the timer period to
+$0.2\,\mathrm{s}$. What is the nominal publication frequency? Would
+changing the history depth from 10 to 20 have the same effect?
+\item \textbf{A modified subscriber.} Change the callback so that it
+prints only messages whose counter is even. State how you extract the
+counter from the received text and test the first six messages.
+\item \textbf{Independent receivers.} Run the custom subscriber and
+\texttt{ros2 topic echo /my\_topic} simultaneously. Predict what happens
+when either receiver is stopped. Does the publisher require both to exist?
+\item \textbf{Find the mismatch.} A publisher uses \texttt{topic} and
+a subscriber uses \texttt{my\_topic}, both with \texttt{String} messages
+in the root namespace. Explain why they do not exchange messages. Identify
+which inspection commands would help find the problem.
+\item \textbf{A replaceable planner.} Using
+Figure~\ref{fig:l14-architecture}, list the inputs and outputs of a planner
+that could replace the existing one. Besides the message types, give three
+interface properties that must remain compatible. Explain why changing
+the planning algorithm need not change the lidar driver.
+\end{enumerate}
+
+\smallskip
+\textit{Further reading.} The official ROS 2 tutorial
+\href{https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Publisher-And-Subscriber.html}{\emph{Writing a simple publisher and subscriber (Python)}}
+provides a related example of this programming pattern.

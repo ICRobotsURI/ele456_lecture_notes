@@ -131,6 +131,9 @@ On Overleaf, upload the project and select `main.tex` as the main document.
 - `chapters/lecture13-search.tex`: graph search and sweep-line sections from lecture 16.
 - `chapters/lecture13-sampling.tex`: approximate decomposition, PRM, search trees,
   and motion primitives from lecture 17.
+- `chapters/lecture14.tex`: Python essentials, ROS 2 nodes/topics, publisher,
+  subscriber, and package execution from lecture 18.
+- `figures/lecture14/`: modular robot architecture and publisher/subscriber flow.
 - `appendices/rotation-conversions.tex`: conversion reference adapted from the supplied handout.
 - `figures/lecture02/`: vector diagrams drawn in TikZ and included by the chapter.
 - `figures/lecture03/`: diagrams for affine and homogeneous transformations.
@@ -155,7 +158,7 @@ On Overleaf, upload the project and select `main.tex` as the main document.
 
 ## Add a lecture
 
-1. Put the next board material and transcript in `lectures/18/`, then `19/`, etc.
+1. Put the next board material and transcript in `lectures/19/`, then `20/`, etc.
 2. Assign each topic to the appropriate chapter, extending an existing chapter
    when a class continues that topic. Record the source mapping in `editorial-notes.md`.
 3. Extend the appropriate chapter when a topic continues. For new

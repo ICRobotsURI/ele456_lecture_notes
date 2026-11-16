@@ -1,0 +1,11 @@
+\begin{tikzpicture}[>=Stealth,
+ box/.style={draw,rounded corners,align=center,minimum width=3.4cm,minimum height=1.5cm}]
+\node[box] (pub) at (0,0) {\texttt{minimal\_publisher}\\\texttt{timer\_callback()}};
+\node[box] (sub) at (8.5,0) {\texttt{minimal\_subscriber}\\\texttt{listener\_callback(msg)}};
+\draw[->,thick,sensorframe] (pub) -- node[above,font=\footnotesize] {\texttt{/my\_topic}}
+ node[below,font=\footnotesize] {\texttt{String: data="Ciao 0"}} (sub);
+\draw[->] (0,1.8) node[above] {timer: $T=0.5\,\mathrm{s}$} -- (pub.north);
+\draw[->] (8.5,1.8) node[above] {message received} -- (sub.north);
+\node[font=\footnotesize] at (0,-1.15) {executor processes ready callbacks};
+\node[font=\footnotesize] at (8.5,-1.15) {executor processes ready callbacks};
+\end{tikzpicture}

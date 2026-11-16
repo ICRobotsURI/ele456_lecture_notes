@@ -1,0 +1,25 @@
+\begin{tikzpicture}[x=1cm,y=1cm,>=Stealth,
+ box/.style={draw,rounded corners,align=center,minimum width=2.1cm,minimum height=1.05cm},
+ flow/.style={->,thick,sensorframe},
+ lab/.style={font=\footnotesize,fill=white,inner sep=2pt}]
+\draw[black!40,rounded corners] (-1.45,-1.25) rectangle (9.1,5.6);
+\node[anchor=west,font=\footnotesize] at (-1.3,5.35) {Computer: ROS 2 software};
+\node[box,draw=robotframe] (plan) at (0,3.8) {Path planner\\and reference};
+\node[box,draw=robotframe] (control) at (4,3.8) {Controller};
+\node[box,draw=robotframe] (map) at (0,0) {Mapping};
+\node[box] (driver) at (7.6,3.8) {Robot driver};
+\node[box] (lidardriver) at (7.6,0) {Lidar driver};
+\node[box,minimum width=1.6cm] (robot) at (11,3.8) {Robot};
+\node[box,minimum width=1.6cm] (lidar) at (11,0) {Lidar};
+\draw[flow] (map) -- node[lab,right] {map} (plan);
+\draw[flow] (plan) -- node[lab,above] {reference} (control);
+\draw[flow] ([yshift=-.22cm]control.east) -- node[lab,below] {$v,\omega$} ([yshift=-.22cm]driver.west);
+\draw[flow] ([yshift=.22cm]driver.west) -- node[lab,above] {odometry} ([yshift=.22cm]control.east);
+\draw[flow] (driver.south) -- (7.6,1.7) -- (2,1.7) -- (2,.3) -- ([yshift=.3cm]map.east);
+\node[lab] at (3.8,1.7) {odometry / pose estimate};
+\draw[flow] (lidardriver) -- node[lab,above] {scan} (map);
+\draw[->,thick] ([yshift=.2cm]robot.west) -- node[lab,above] {sensors} ([yshift=.2cm]driver.east);
+\draw[->,thick] ([yshift=-.2cm]driver.east) -- node[lab,below] {commands} ([yshift=-.2cm]robot.west);
+\draw[->,thick] (lidar) -- node[lab,above] {scan data} (lidardriver);
+\node[align=center,font=\footnotesize] at (10.55,-.95) {Hardware links\\(e.g., USB serial)};
+\end{tikzpicture}
